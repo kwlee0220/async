@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-	compile "etri:utils:1.0"
+	compile project(":utils")
 }
 
 task sourceJar(type: Jar) {
