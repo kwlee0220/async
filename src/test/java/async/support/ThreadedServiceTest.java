@@ -9,25 +9,21 @@ import async.ServiceState;
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public class AbstractThreadedServiceTest {
+public class ThreadedServiceTest {
 	@Test
-	public void test0() {
+	public void test0() throws Exception {
 		ThreadedService svc = ThreadedService.from(cb -> Thread.sleep(500));
 		
 		long ts0 = System.currentTimeMillis();
-		try {
-			Assert.assertEquals(ServiceState.STOPPED, svc.getState());
-			
-			svc.start();
-			Assert.assertEquals(ServiceState.RUNNING, svc.getState());
-			
-			svc.waitForFinished();
-			long ts1 = System.currentTimeMillis();
-			Assert.assertEquals(ServiceState.STOPPED, svc.getState());
-			Assert.assertTrue(ts1 -ts0 >= 500);
-		}
-		catch ( Exception e ) {
-		}
+		Assert.assertEquals(ServiceState.STOPPED, svc.getState());
+		
+		svc.start();
+		Assert.assertEquals(ServiceState.RUNNING, svc.getState());
+		
+		svc.waitForFinished();
+		long ts1 = System.currentTimeMillis();
+		Assert.assertEquals(ServiceState.STOPPED, svc.getState());
+		Assert.assertTrue(ts1 -ts0 >= 500);
 	}
 	
 	@Test
@@ -94,5 +90,25 @@ public class AbstractThreadedServiceTest {
 		Assert.assertEquals(ServiceState.FAILED, svc.getState());
 		Assert.assertEquals(IllegalStateException.class, svc.getFailureCause().getClass());
 		Assert.assertEquals("after start", svc.getFailureCause().getMessage());
+	}
+	
+	@Test
+	public void testNotifyServiceFailed() throws Exception {
+		ThreadedService svc = ThreadedService.from(cb -> {
+			Thread.sleep(200);
+			throw new IllegalStateException("after start");
+		});
+		
+		Assert.assertEquals(ServiceState.STOPPED, svc.getState());
+		svc.notifyServiceFailed(new IllegalArgumentException());
+		Assert.assertEquals(ServiceState.FAILED, svc.getState());
+
+//		svc.start();
+//		Assert.assertEquals(ServiceState.RUNNING, svc.getState());
+//		
+//		svc.waitForFinished();
+//		Assert.assertEquals(ServiceState.FAILED, svc.getState());
+//		Assert.assertEquals(IllegalStateException.class, svc.getFailureCause().getClass());
+//		Assert.assertEquals("after start", svc.getFailureCause().getMessage());
 	}
 }

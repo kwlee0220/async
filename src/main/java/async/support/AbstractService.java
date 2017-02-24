@@ -14,6 +14,7 @@ import async.Service;
 import async.ServiceState;
 import async.ServiceStateChangeListener;
 import net.jcip.annotations.GuardedBy;
+import utils.Errors;
 import utils.ExceptionUtils;
 import utils.Utilities;
 import utils.thread.ExecutorAware;
@@ -108,10 +109,7 @@ public abstract class AbstractService implements Service, ExecutorAware {
 	protected abstract void stopService() throws Exception;
 	
 	protected ServiceState handleFailure(Throwable cause) {
-		try {
-			stopService();
-		}
-		catch ( Throwable ignored ) { }
+		Errors.runQuietly(()->stopService());
 		return ServiceState.FAILED;
 	}
 	
@@ -374,9 +372,9 @@ public abstract class AbstractService implements Service, ExecutorAware {
 			}
 			
 			switch ( m_state ) {
-				case STATE_STOPPED:
 				case STATE_FAILED:
 					return;
+				case STATE_STOPPED:
 				case STATE_RUNNING:
 					setStateInGuard(STATE_FAILING);
 					break;
@@ -429,41 +427,6 @@ public abstract class AbstractService implements Service, ExecutorAware {
 				
 				m_logger.info("failed: {}, cause={}", this, cause);
 			}
-		}
-		finally {
-			m_lock.unlock();
-		}
-	}
-	
-	@Override
-	public final void waitForStarted() throws InterruptedException {
-		m_lock.lock();
-		try {
-			while ( m_state != STATE_RUNNING ) {
-				m_cond.await();
-			}
-		}
-		finally {
-			m_lock.unlock();
-		}
-	}
-	
-	@Override
-	public final boolean waitForStarted(long timeoutMillis) throws InterruptedException {
-		long dueNanos = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis);
-		
-		m_lock.lock();
-		try {
-			while ( m_state != STATE_RUNNING ) {
-				long remainNaos = dueNanos - System.nanoTime();
-				if ( remainNaos <= 0 ) {
-					return false;
-				}
-				
-				m_cond.await(remainNaos, TimeUnit.NANOSECONDS);
-			}
-			
-			return true;
 		}
 		finally {
 			m_lock.unlock();
@@ -625,6 +588,6 @@ public abstract class AbstractService implements Service, ExecutorAware {
 				}
 				
 			}
-		}, m_executor).join();
+		}, m_executor);
 	}
 }

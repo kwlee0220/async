@@ -8,14 +8,19 @@ import java.util.function.Supplier;
 
 import javax.jws.Oneway;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import async.AsyncOperation;
+import async.Service;
+import async.ServiceState;
+import async.ServiceStateChangeListener;
 import async.Startable;
-import async.StartableListener;
-import async.StartableState;
+import async.optor.ConcurrentService;
+import utils.Errors;
 import utils.Utilities;
 
 
@@ -78,31 +83,12 @@ public class AsyncUtils {
 		return false;
 	}
 	
-	public static boolean startQuietly(Startable startable) {
-		if ( startable != null ) {
-			try {
-				startable.start();
-				return true;
-			}
-			catch ( Exception ignored ) { }
-		}
-		return false;
+	public static boolean startQuietly(Service service) {
+		return Errors.runQuietly(()->service.start());
 	}
-
-	public static boolean stopQuietly(Startable startable) {
-		if ( startable != null ) {
-			try {
-				startable.stop();
-				
-				return true;
-			}
-			catch ( Throwable ignored ) {
-				return false;
-			}
-		}
-		else {
-			return false;
-		}
+	
+	public static boolean stopQuietly(Service service) {
+		return Errors.runQuietly(()->service.stop());
 	}
 
 	public static void stopQuietly(Executor executor, Startable... tasks) throws InterruptedException {
@@ -132,40 +118,78 @@ public class AsyncUtils {
 		});
 	}
 	
-	public static final void setChain(Startable leader, Startable follower) {
-		leader.addStartableListener(new Propagator(leader, follower));
+	public static final Service concurrent(Service... services) {
+		return new ConcurrentService(services);
 	}
 	
-	static class Propagator implements StartableListener {
-		private static final Logger s_logger = Logger.getLogger("STARTABLE.CHAIN");
+	public static final void setFailureDependency(Service dependee, AbstractService dependent) {
+		dependee.addStateChangeListener(new ServiceStateChangeListener() {
+			@Override @Oneway
+			public void onStateChanged(Service target, ServiceState fromState, ServiceState toState) {
+				if ( toState == ServiceState.FAILED ) {
+					dependent.notifyServiceFailed(target.getFailureCause());
+				}
+			}
+		});
+	}
+	
+	public static final Object chain(Service dependee, Service dependent) {
+		Propagator chain = new Propagator(dependee, dependent);
+		dependee.addStateChangeListener(chain);
 		
-		private final Startable m_leader;
-		private final Startable m_follower;
+		return chain;
+	}
+	
+	public static final void unchain(Object chain) {
+		Preconditions.checkArgument(chain instanceof Propagator, "invalid chain: not "
+																+ Propagator.class.getName());
 		
-		Propagator(Startable leader, Startable follower) {
-			m_leader = leader;
-			m_follower = follower;
+		Propagator link = (Propagator)chain;
+		link.m_dependee.removeStateChangeListener(link);
+	}
+	
+	static class Propagator implements ServiceStateChangeListener {
+		private static final Logger s_logger = LoggerFactory.getLogger("STARTABLE.CHAIN");
+		
+		private final Service m_dependee;
+		private final Service m_dependent;
+		
+		Propagator(Service dependee, Service dependent) {
+			m_dependee = dependee;
+			m_dependent = dependent;
+		}
+		
+		public Service getDependee() {
+			return m_dependee;
 		}
 		
 		@Override @Oneway
-		public void onStateChanged(Startable target, StartableState fromState, StartableState toState) {
-			if ( fromState == StartableState.STOPPED && toState == StartableState.RUNNING ) {
-				try {
-					m_follower.start();
-				}
-				catch ( Exception e ) {
-					s_logger.error("fails to start the follower in chain: comp=" + m_follower + ", cause=" + e);
-					
-					AsyncUtils.stopQuietly(m_leader);
-				}
-			}
-			else if ( fromState == StartableState.RUNNING && toState == StartableState.STOPPED ) {
-				try {
-					m_follower.stop();
-				}
-				catch ( Throwable e ) {
-					s_logger.error("fails to stop the follower in chain: comp=" + m_follower + ", cause=" + e);
-				}
+		public void onStateChanged(Service target, ServiceState fromState, ServiceState toState) {
+			switch ( toState ) {
+				case RUNNING:
+					Utilities.runAsync(() -> {
+						try {
+							m_dependent.start();
+						}
+						catch ( Throwable e ) {
+							s_logger.error("fails to start the dependent in chain: comp={}, cause={}",
+											m_dependent, e);
+							stopQuietly(target);
+						}
+					});
+					break;
+				case STOPPED:
+					Utilities.runAsync(() -> m_dependent.stop());
+					break;
+				case FAILED:
+					if ( m_dependent instanceof AbstractService ) {
+						AbstractService asvc = (AbstractService)m_dependent;
+						Utilities.runAsync(() -> asvc.notifyServiceFailed(target.getFailureCause()));
+					}
+					else {
+						Utilities.runAsync(() -> m_dependent.stop());
+					}
+					break;
 			}
 		}
 	}

@@ -24,22 +24,15 @@ package async;
  * @author Kang-Woo Lee (ETRI)
  */
 public interface Service {
-	public interface FailureHandler {
-		public ServiceState handleFailure(Service target, Throwable cause);
-	}
-	public interface FailureListener {
-		public void onFailed(Service target, Throwable cause);
-	}
-	
 	/**
 	 * 작업을 시작시킨다.
 	 * <p>
-	 * 메소드는 서비스의 상태가 {@link ServiceState#STARTING}으로 전이된 상태에서 반환되기 때문에,
-	 * 상태가 {@link ServiceState#RUNNING}가되기 이전에 반환될 수 있다.
-	 * 본 서비스의 상태가 {@link ServiceState#STOPPED}가 아닌 경우는 {@link IllegalStateException} 예외가
-	 * 발생시킨다.
+	 * 메소드는 서비스의 상태가 {@link ServiceState#RUNNING}으로 전이된 상태에서 반환된다.
+	 * 본 서비스의 상태가 {@link ServiceState#STOPPED} 또는 {@link ServiceState#FAILED}가 아닌 경우는
+	 * {@link IllegalStateException} 예외가 발생시킨다.
 	 * 
-	 * @throws IllegalStateException 호출 당시 서비스의 상태가  {@link ServiceState#STOPPED}가 아닌 경우.
+	 * @throws IllegalStateException 호출 당시 서비스의 상태가  {@link ServiceState#STOPPED} 또는
+	 * 						{@link ServiceState#FAILED}가 아닌 경우.
 	 * @throws Exception	서비스 시작 과정 중에 다른 예외가 발생된 경우.
 	 */
 	public void start() throws Exception;
@@ -58,9 +51,21 @@ public interface Service {
 	 */
 	public ServiceState getState();
 	
-	public boolean isRunning();
-	public boolean isStopped();
-	public boolean isFailed();
+	public default boolean isRunning() {
+		return getState() == ServiceState.RUNNING;
+	}
+	
+	public default boolean isStopped() {
+		return getState() == ServiceState.STOPPED;
+	}
+	
+	public default boolean isFailed() {
+		return getState() == ServiceState.FAILED;
+	}
+	
+	public default boolean isFinished() {
+		return getState() == ServiceState.STOPPED || getState() == ServiceState.FAILED;
+	}
 	
 	/**
 	 * 고장 상태 ({@link ServiceState#FAILED})인 경우
@@ -71,22 +76,6 @@ public interface Service {
 	 *  @return	고장 발생 원인 예외 객체.
 	 */
 	public Throwable getFailureCause();
-
-	/**
-	 * 서비스의 상태가 {@link ServiceState#RUNNING}이 될 때까지 대기한다.
-	 * 
-	 * @throws InterruptedException 대기하던 쓰레드가 강제 종료된 경우.
-	 */
-	public void waitForStarted() throws InterruptedException;
-	
-	/**
-	 * 서비스의 상태가 {@link ServiceState#RUNNING}이 될 때까지
-	 * 최대 'timeoutMillis' 동안 대기한다.
-	 * 
-	 * @param timeoutMillis	대기 제한 시간 (단위: milli-second)
-	 * @throws InterruptedException 대기하던 쓰레드가 강제 종료된 경우.
-	 */
-	public boolean waitForStarted(long timeoutMillis) throws InterruptedException;
 	
 	/**
 	 * 작업이 중지될 때까지 대기한다.
