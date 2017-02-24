@@ -18,6 +18,8 @@ repositories {
 
 dependencies {
 	compile project(":utils")
+	
+	testCompile "junit:junit:4.12"
 }
 
 task sourceJar(type: Jar) {

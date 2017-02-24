@@ -110,11 +110,9 @@ public abstract class AbstractService implements Service, ExecutorAware {
 	protected ServiceState handleFailure(Throwable cause) {
 		try {
 			stopService();
-			return ServiceState.STOPPED;
 		}
-		catch ( Exception e ) {
-			return ServiceState.FAILED;
-		}
+		catch ( Throwable ignored ) { }
+		return ServiceState.FAILED;
 	}
 	
 	/**
