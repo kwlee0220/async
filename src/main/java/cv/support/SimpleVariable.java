@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import async.AsyncOperation;
 import async.AsyncOperationState;
 import async.OperationStoppedException;
-import async.StartableState;
 import async.support.AsyncOperationFinishListener;
 import async.support.AsyncUtils;
 import cv.ValueInfo;

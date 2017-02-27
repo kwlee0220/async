@@ -1,10 +1,10 @@
 package cv;
 
-import async.Startable;
+import async.Service;
 
 /**
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public interface ContextVariable<T> extends Variable<T>, Startable {
+public interface ContextVariable<T> extends Variable<T>, Service {
 }

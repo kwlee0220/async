@@ -4,13 +4,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
 import javax.jws.Oneway;
 
 import async.FutureCondition;
-import async.Startable;
-import async.StartableListener;
-import async.StartableState;
+import async.Service;
+import async.ServiceState;
+import async.ServiceStateChangeListener;
 import net.jcip.annotations.GuardedBy;
 
 
@@ -18,32 +19,32 @@ import net.jcip.annotations.GuardedBy;
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public class StartableCondition implements FutureCondition {
+public class ServiceStateCondition implements FutureCondition {
 	private static final int STATE_WAITING = 0;
 	private static final int STATE_DONE = 1;
 	
-	private final Startable m_target;
-	private final StartableState m_targetState;
+	private final Service m_target;
+	private final Predicate<ServiceState> m_statePred;
 	
 	private final Lock m_lock = new ReentrantLock();
 	private final Condition m_cond = m_lock.newCondition();
 	@GuardedBy("m_lock") private int m_state;
 	
-	public static StartableCondition whenStarted(Startable target) {
-		return new StartableCondition(target, StartableState.RUNNING);
+	public static ServiceStateCondition whenStarted(Service target) {
+		return new ServiceStateCondition(target, (state) -> state == ServiceState.RUNNING);
 	}
 	
-	public static StartableCondition whenStopped(Startable target) {
-		return new StartableCondition(target, StartableState.STOPPED);
+	public static ServiceStateCondition whenStopped(Service target) {
+		return new ServiceStateCondition(target, (state) -> state == ServiceState.STOPPED);
 	}
 	
-	public StartableCondition(Startable target, StartableState targetState) {
+	public ServiceStateCondition(Service target, Predicate<ServiceState> statePred) {
 		m_target = target;
-		m_targetState = targetState;
+		m_statePred = statePred;
 		
-		m_state = (target.getState() != targetState) ? STATE_WAITING : STATE_DONE;
+		m_state = statePred.test(target.getState()) ? STATE_WAITING : STATE_DONE;
 		if ( m_state == STATE_WAITING ) {
-			m_target.addStartableListener(m_listener);
+			m_target.addStateChangeListener(m_listener);
 		}
 	}
 
@@ -92,16 +93,16 @@ public class StartableCondition implements FutureCondition {
 		}
 	}
 	
-	private final StartableListener m_listener = new StartableListener() {
+	private final ServiceStateChangeListener m_listener = new ServiceStateChangeListener() {
 		@Override @Oneway
-		public void onStateChanged(Startable target, StartableState fromState, StartableState toState) {
-			if ( toState == m_targetState ) {
+		public void onStateChanged(Service target, ServiceState fromState, ServiceState toState) {
+			if ( m_statePred.test(toState) ) {
 				m_lock.lock();
 				try {
 					m_state = STATE_DONE;
 					m_cond.signalAll();
 					
-					m_target.removeStartableListener(this);
+					m_target.removeStateChangeListener(this);
 				}
 				finally {
 					m_lock.unlock();

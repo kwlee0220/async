@@ -16,6 +16,7 @@ import async.ServiceStateChangeListener;
 import net.jcip.annotations.GuardedBy;
 import utils.Errors;
 import utils.ExceptionUtils;
+import utils.LoggerSettable;
 import utils.Utilities;
 import utils.thread.ExecutorAware;
 
@@ -56,7 +57,7 @@ import utils.thread.ExecutorAware;
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public abstract class AbstractService implements Service, ExecutorAware {
+public abstract class AbstractService implements Service, ExecutorAware, LoggerSettable {
 	private static final Logger s_logger = LoggerFactory.getLogger("STARTABLE");
 
 	/** 작업 중지 상태 */
@@ -200,7 +201,7 @@ public abstract class AbstractService implements Service, ExecutorAware {
 	 * 								아닌 경우.
 	 */
 	@Override
-	public void start() throws Exception {
+	public final void start() throws Exception {
 		m_lock.lock();
 		try {
 			// 'STATE_STOPPED' 또는 'STATE_FAILED' 상태인 경우는 상태를 STATE_STARTING으로 바꾸고
@@ -275,7 +276,7 @@ public abstract class AbstractService implements Service, ExecutorAware {
 	 * {@link ServiceState#FAILED} 상태로 전이되고 등록된 모든 상태 전이 리스너들에게 통보한다.
 	 */
 	@Override
-	public void stop() {
+	public final void stop() {
 		m_lock.lock();
 		try {
 			// 임시 상태인 경우는 해당 상태에서 벗어날 때까지 대기한다.
@@ -527,6 +528,11 @@ public abstract class AbstractService implements Service, ExecutorAware {
 	 */
 	public void setLogger(Logger logger) {
 		m_logger = logger;
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("Service[%s]", getState());
 	}
 	
 	protected final ReentrantLock getStateLock() {

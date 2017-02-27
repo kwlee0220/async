@@ -1,6 +1,6 @@
 package async.support;
 
-import java.util.List;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -12,13 +12,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 
 import async.AsyncOperation;
 import async.Service;
 import async.ServiceState;
 import async.ServiceStateChangeListener;
-import async.Startable;
 import async.optor.ConcurrentService;
 import utils.Errors;
 import utils.Utilities;
@@ -91,25 +89,15 @@ public class AsyncUtils {
 		return Errors.runQuietly(()->service.stop());
 	}
 
-	public static void stopQuietly(Executor executor, Startable... tasks) throws InterruptedException {
-		List<StartableCondition> conditions = Lists.newArrayList();
-		for ( Startable task: tasks ) {
-			if ( task != null ) {
-				conditions.add(StartableCondition.whenStopped(task));
-				stopAsynchronously(task, executor);
-			}
-		}
-		
-		for ( StartableCondition cond: conditions ) {
-			cond.await();
-		}
+	public static void stopQuietly(Service... tasks) {
+		Arrays.stream(tasks).forEach(AsyncUtils::stopQuietly);
 	}
 
-	public static void stopAsynchronously(final Startable job, Executor executor) {
+	public static void stopAsynchronously(final Service svc, Executor executor) {
 		Utilities.executeAsynchronously(executor, new Runnable() {
 			public void run() {
 				try {
-					job.stop();
+					svc.stop();
 				}
 				catch ( Exception ignored ) {
 					System.err.println("async stop failed: " + ignored);

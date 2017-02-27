@@ -52,7 +52,7 @@ public class CompositeService extends AbstractService {
 	protected void startService() throws Exception {
 		List<Service> faileds = Lists.newCopyOnWriteArrayList();
 		m_components.parallelStream()
-					.forEach(comp -> Errors.toRunnable(()->comp.start(), error->faileds.add(comp)));
+					.forEach(comp -> Errors.toRunnable(()->comp.start(), error->faileds.add(comp)).run());
 		if ( !faileds.isEmpty() ) {
 			m_components.parallelStream().forEach(Service::stop);
 			
@@ -75,7 +75,10 @@ public class CompositeService extends AbstractService {
 		@Override
 		public void onStateChanged(Service target, ServiceState fromState, ServiceState toState) {
 			if ( toState == ServiceState.FAILED ) {
-				notifyServiceFailed(target.getFailureCause());
+				CompositeService.this.notifyServiceFailed(target.getFailureCause());
+			}
+			else if ( toState == ServiceState.STOPPED ) {
+				CompositeService.this.stop();
 			}
 		}
 	}
