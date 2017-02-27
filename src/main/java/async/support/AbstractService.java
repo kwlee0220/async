@@ -1,7 +1,5 @@
 package async.support;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -10,9 +8,11 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.eventbus.EventBus;
+
 import async.Service;
 import async.ServiceState;
-import async.ServiceStateChangeListener;
+import async.ServiceStateChangeEvent;
 import net.jcip.annotations.GuardedBy;
 import utils.Errors;
 import utils.ExceptionUtils;
@@ -89,14 +89,14 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 	private final Condition m_cond = m_lock.newCondition();
 	@GuardedBy("m_lock") private int m_state = STATE_STOPPED;
 	@GuardedBy("m_lock") private Throwable m_failureCause;
-	@GuardedBy("m_lock") private final List<ServiceStateChangeListener> m_listeners;
+	@GuardedBy("m_lock") private final EventBus m_channel = new EventBus();
 	
 	/**
 	 * 서비스가 시작할 때 <code>AbstractService</code>에 의해
 	 * 호출되는 메소드.
 	 * <p>
 	 * 본 메소드는 {@link #start()}가 호출될 때 정지 상태인 경우만 호출된다.
-	 * @throws Exception TODO
+	 * @throws Exception	서비스 시작 준비 과정 중에 오류가 발생된 경우.
 	 */
 	protected abstract void startService() throws Exception;
 		
@@ -105,7 +105,7 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 	 * 호출되는 메소드.
 	 * <p>
 	 * 본 메소드는 {@link #stop()}가 호출될 때  수행 상태인 경우만 호출된다.
-	 * @throws Exception TODO
+	 * @throws Exception	서비스 종료 과정 중에 오류가 발생된 경우.
 	 */
 	protected abstract void stopService() throws Exception;
 	
@@ -122,7 +122,6 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 	protected AbstractService() {
 		m_state = STATE_STOPPED;
 		m_failureCause = null;
-		m_listeners = new CopyOnWriteArrayList<ServiceStateChangeListener>();
 	}
 	
 	/**
@@ -481,10 +480,10 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 	}
 
 	@Override
-	public final void addStateChangeListener(ServiceStateChangeListener listener) {
+	public final void addStateChangeListener(Object listener) {
 		m_lock.lock();
 		try {
-			m_listeners.add(listener);
+			m_channel.register(listener);
 		}
 		finally {
 			m_lock.unlock();
@@ -492,10 +491,10 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 	}
 
 	@Override
-	public final void removeStateChangeListener(ServiceStateChangeListener listener) {
+	public final void removeStateChangeListener(Object listener) {
 		m_lock.lock();
 		try {
-			m_listeners.remove(listener);
+			m_channel.unregister(listener);
 		}
 		finally {
 			m_lock.unlock();
@@ -583,17 +582,7 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 	}
 	
 	private final void notifyListenerAll(final ServiceState from, final ServiceState to) {
-		Utilities.runAsync(()-> {
-			for ( ServiceStateChangeListener listener: m_listeners ) {
-				try {
-					listener.onStateChanged(AbstractService.this, from, to);
-				}
-				catch ( Throwable ignored ) {
-					s_logger.warn("(ignored) fails to notify 'onStateChanged' to listener={}, cause={}",
-									listener, ExceptionUtils.unwrapThrowable(ignored));
-				}
-				
-			}
-		}, m_executor);
+		final ServiceStateChangeEvent changed = new ServiceStateChangeEvent(this, from, to);
+		Utilities.runAsync(()-> m_channel.post(changed), m_executor);
 	}
 }

@@ -105,12 +105,12 @@ public interface Service {
 	 * 
 	 * @param listener	추가할 {@link Service}의 리스너
 	 */
-	public void addStateChangeListener(ServiceStateChangeListener listener);
+	public void addStateChangeListener(Object listener);
 	
 	/**
 	 * 주어진 {@link Service}의 상태 변화 리스너를 제거한다.
 	 * 
 	 * @param listener	제거할 {@link Service}의 리스너
 	 */
-	public void removeStateChangeListener(ServiceStateChangeListener listener);
+	public void removeStateChangeListener(Object listener);
 }

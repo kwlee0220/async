@@ -13,10 +13,10 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.base.Preconditions;
+import com.google.common.eventbus.Subscribe;
 
 import async.Service;
-import async.ServiceState;
-import async.ServiceStateChangeListener;
+import async.ServiceStateChangeEvent;
 import async.support.AbstractService;
 import utils.Utilities;
 
@@ -170,17 +170,16 @@ public class ConcurrentService extends AbstractService {
 		}
 	}
 	
-	class StartMonitor implements ServiceStateChangeListener {
+	class StartMonitor {
 		private final int m_idx;
 		
 		StartMonitor(int idx) {
 			m_idx = idx;
 		}
 
-		@SuppressWarnings("incomplete-switch")
-		@Override
-		public void onStateChanged(Service target, ServiceState fromState, ServiceState toState) {
-			switch ( toState ) {
+		@Subscribe
+		public void onStateChanged(ServiceStateChangeEvent event) {
+			switch ( event.getToState() ) {
 				case RUNNING:
 				case FAILED:
 					setDone(m_idx);
@@ -189,17 +188,16 @@ public class ConcurrentService extends AbstractService {
 		}
 	}
 	
-	class StopMonitor implements ServiceStateChangeListener {
+	class StopMonitor {
 		private final int m_idx;
 		
 		StopMonitor(int idx) {
 			m_idx = idx;
 		}
 
-		@SuppressWarnings("incomplete-switch")
-		@Override
-		public void onStateChanged(Service target, ServiceState fromState, ServiceState toState) {
-			switch ( toState ) {
+		@Subscribe
+		public void onStateChanged(ServiceStateChangeEvent event) {
+			switch ( event.getToState() ) {
 				case STOPPED:
 				case FAILED:
 					setDone(m_idx);

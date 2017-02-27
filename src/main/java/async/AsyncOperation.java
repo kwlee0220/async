@@ -192,7 +192,7 @@ public interface AsyncOperation<T> {
 	 * 
 	 * @param listener	등록시킬 리스너 객체.
 	 */
-	public void addAsyncOperationListener(AsyncOperationListener listener);
+	public void addAsyncOperationListener(Object listener);
 	
 	/**
 	 * 주어진 리스너를 본 비동기 연산에서 등록 해제시킨다.
@@ -201,5 +201,5 @@ public interface AsyncOperation<T> {
 	 * 
 	 * @param listener	등록 해제시킬 리스너 객체.
 	 */
-	public void removeAsyncOperationListener(AsyncOperationListener listener);
+	public void removeAsyncOperationListener(Object listener);
 }

@@ -64,13 +64,13 @@ public class TimedAsyncOperation<T> extends AbstractAsyncOperation<T> implements
 
 	private final AsyncOperation<T> m_aop;
 	private final long m_timeout;
-	private volatile Supplier<AsyncOperation<?>> m_timeoutAopSupplier;
+	private volatile Supplier<AsyncOperation<T>> m_timeoutAopSupplier;
 	private volatile CamusExecutor m_cexecutor;
 
 	private final Object m_imutex = new Object();
 	@GuardedBy("m_imutex") private int m_istate;
 	@GuardedBy("m_imutex") private Future<?> m_future;
-	@GuardedBy("m_imutex") private AsyncOperation<?> m_timeoutAop = null;
+	@GuardedBy("m_imutex") private AsyncOperation<T> m_timeoutAop = null;
 	
 	public static <T> TimedAsyncOperation<T> newInstance(AsyncOperation<T> aop, Integer timeout) {
 		return new TimedAsyncOperation<T>(aop, timeout);
@@ -120,7 +120,7 @@ public class TimedAsyncOperation<T> extends AbstractAsyncOperation<T> implements
 	 * @param timeoutAopFact	시간 초과 처리 비동기 연산 생성자.
 	 * 					시간 제한이 발생되었을 때 수행될 비동기 연산을 생성하는 생성자.
 	 */
-	public void setTimeoutOperationSupplier(Supplier<AsyncOperation<?>> supplier) {
+	public void setTimeoutOperationSupplier(Supplier<AsyncOperation<T>> supplier) {
 		m_timeoutAopSupplier = supplier;
 	}
 

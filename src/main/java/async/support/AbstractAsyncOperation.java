@@ -1,18 +1,19 @@
 package async.support;
 
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.eventbus.EventBus;
 
 import async.AsyncOperation;
-import async.AsyncOperationListener;
 import async.AsyncOperationState;
+import async.AsyncOperationStateChangeEvent;
 import async.OperationSchedulerException;
 import async.OperationSchedulerProvider;
 import async.SchedulableAsyncOperation;
@@ -77,7 +78,7 @@ import utils.thread.ExecutorAware;
  * @author Kang-Woo Lee (ETRI)
  */
 public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOperation<T>, ExecutorAware {
-	private static final Logger s_logger = Logger.getLogger("AOP");
+	private static final Logger s_logger = LoggerFactory.getLogger("AOP");
 	
 	/** 연산이 시작되지 않은 상태. */
 	protected static final int NOT_STARTED = 0;
@@ -121,14 +122,13 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	 * 공유 멤버들의 접근을 제어하기 위한 lock 객체.
 	 */
 	protected final ReentrantLock m_aopLock = new ReentrantLock();
-	@GuardedBy("m_aopLock") protected final Condition m_cond = m_aopLock.newCondition();
-	@GuardedBy("m_aopLock") private int m_state;	
+	@GuardedBy("m_aopLock") protected final Condition m_aopCond = m_aopLock.newCondition();
+	@GuardedBy("m_aopLock") protected int m_state;	
 	@GuardedBy("m_aopLock") private T m_result;
 	@GuardedBy("m_aopLock") private Throwable m_fault;
 	@GuardedBy("m_aopLock") private String[] m_capaNameList = null;
 	private volatile OperationSchedulerProvider m_scheduler = null;
-	private final CopyOnWriteArraySet<AsyncOperationListener> m_listeners
-											= new CopyOnWriteArraySet<AsyncOperationListener>();
+	private final EventBus m_channel = new EventBus();
 	private volatile Executor m_executor;
 	private Logger m_logger = s_logger;
 	
@@ -319,9 +319,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 			m_aopLock.unlock();
 		}
 
-		if ( getLogger().isDebugEnabled() ) {
-			getLogger().debug("starting: aop=" + this);
-		}
+		getLogger().debug("starting: aop={}", this);
 		
 		try {
 			startOperation();
@@ -332,9 +330,9 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 			
 			Utilities.executeAsynchronously(m_executor, new Runnable() {
 				@Override public void run() {
-					if ( _getState() == STARTING ) {
-						AbstractAsyncOperation.this.notifyOperationStarted();
-					}
+//					if ( _getState() == STARTING ) {
+//						AbstractAsyncOperation.this.notifyOperationStarted();
+//					}
 					
 					AbstractAsyncOperation.this.notifyOperationFailed(cause);
 				}
@@ -399,7 +397,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 		// TODO: stop() 함수에서 직접 notifyStopped() 를 부르는 것이 좀 이상하지만,
 		// 이미 많은 코드가 이것에 의존하기 때문에 지금을 그냥 두고, 나중에
 		// 큰 맘 먹고 수행해야 할 것 같다.
-		notifyFinishedToListeners(AsyncOperationState.CANCELLED);
+    	postStateChangeEvent(AsyncOperationState.CANCELLED);
 	}
 	
 	/**
@@ -437,8 +435,8 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 			onOperationMarkCancelled();
 		}
 		catch ( Throwable e ) { }
-		
-		notifyFinishedToListeners(AsyncOperationState.CANCELLED);
+
+    	postStateChangeEvent(AsyncOperationState.CANCELLED);
 	}
 
 	@Override
@@ -545,7 +543,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 		m_aopLock.lock();
 		try {
 			while ( m_state < RUNNING ) {
-				m_cond.await();
+				m_aopCond.await();
 			}
 		}
 		finally {
@@ -571,7 +569,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	            if ( timeoutNano <= 0 ) {
 	                return false;
 	            }
-	            timeoutNano = m_cond.awaitNanos(timeoutNano);
+	            timeoutNano = m_aopCond.awaitNanos(timeoutNano);
 			}
 		}
 		finally {
@@ -584,7 +582,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 		m_aopLock.lock();
 		try {
 			while ( !isReallyFinished() ) {
-				m_cond.await();
+				m_aopCond.await();
 			}
 		}
 		finally {
@@ -612,7 +610,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	                return false;
 	            }
 	            
-	            timeoutNano = m_cond.awaitNanos(timeoutNano);
+	            timeoutNano = m_aopCond.awaitNanos(timeoutNano);
 			}
 		}
 		finally {
@@ -646,7 +644,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 				default:
 					throw new RuntimeException("Illegal aop state=" + m_state);
 			}
-			notifyStartedToListeners();
+        	postStateChangeEvent(AsyncOperationState.RUNNING);
 		}
 		finally {
 			m_aopLock.unlock();
@@ -688,8 +686,8 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 				case CANCELLING:
 					m_result = result;
 					setStateInGuard(COMPLETED);
-					
-					notifyFinishedToListeners(AsyncOperationState.COMPLETED);
+
+	            	postStateChangeEvent(AsyncOperationState.COMPLETED);
 					break;
 				case COMPLETED:
 				case FAILED:
@@ -743,7 +741,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 				case CANCELLING:
 				case DELAYED_CANCELLING:
 					setStateInGuard(CANCELLED);
-					notifyFinishedToListeners(AsyncOperationState.CANCELLED);
+	            	postStateChangeEvent(AsyncOperationState.CANCELLED);
 					break;
 				case CANCELLED:
 					break;
@@ -772,7 +770,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	 */
 	public void notifyOperationFailed(Throwable fault) {
 		// 여기에 올 수 있는 상태는
-		//	'STARTING': STARTED 통보보다 이전에 호출된 경우 (RUNNING 상태가 될 때까지 대기)
+		//	'STARTING': 'startOperation()' 호출 중에 발생된 경우 (=> 실패시킴)
 		//	'RUNNING': 수행 중 오류가 발생된  경우 (=> 실패시킴)
 		//	'STOPPING': 오류가 발생될 때 취소 과정 중인 경우. (=> 실패시킴)
 		//	'STOPPED': 오류가 발생될 때 연산이 이미 취소된  경우. (=> 실패 통보 무시)
@@ -781,19 +779,14 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 		//
 		m_aopLock.lock();
 		try {
-			// 'STARTED' 통보가 오기도 전에 오류가 발생될 수도 있기 때문
-			if ( m_state == STARTING ) {
-				// STARTED 통보를 대기한다.
-				waitStartedNotification();
-			}
-			
 			switch ( m_state ) {
 				case RUNNING:
 				case CANCELLING:
+				case STARTING:
 					m_fault = fault;
 					setStateInGuard(FAILED);
 
-					notifyFinishedToListeners(AsyncOperationState.FAILED);
+	            	postStateChangeEvent(AsyncOperationState.FAILED);
 					break;
 				case COMPLETED:
 				case FAILED:
@@ -812,9 +805,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 			m_aopLock.unlock();
 		}
 
-		if ( getLogger().isInfoEnabled() ) {
-			getLogger().info("failed: aop=" + this + ", cause=" + fault);
-		}
+		getLogger().info("failed: aop={}, cause={}", this, fault);
 	}
 	
 	/**
@@ -836,17 +827,17 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	}
 
 	@Override
-	public final void addAsyncOperationListener(AsyncOperationListener listener) {
+	public final void addAsyncOperationListener(Object listener) {
 		m_aopLock.lock();
 		try {
-			m_listeners.add(listener);
+			m_channel.register(listener);
 			
 			if ( m_state >= RUNNING ) {
-				notifyStartedToListeners();
+            	postStateChangeEvent(AsyncOperationState.RUNNING);
 			}
 			
 			if ( isReallyFinished() ) {
-				notifyFinishedToListeners(getState());
+            	postStateChangeEvent(getState());
 			}
 		}
 		finally {
@@ -855,10 +846,10 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	}
 
 	@Override
-	public final void removeAsyncOperationListener(AsyncOperationListener listener) {
+	public final void removeAsyncOperationListener(Object listener) {
 		m_aopLock.lock();
 		try {
-			m_listeners.remove(listener);
+			m_channel.unregister(listener);
 		}
 		finally {
 			m_aopLock.unlock();
@@ -902,39 +893,12 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	 */
 	protected final void setStateInGuard(int state) {
 		m_state = state;
-		m_cond.signalAll();
+		m_aopCond.signalAll();
 	}
 	
-	private void notifyStartedToListeners() {
-		for ( final AsyncOperationListener listener: m_listeners ) {
-			Utilities.executeAsynchronously(m_executor, new Runnable() {
-				@Override public void run() {
-					try {
-						listener.onAsyncOperationStarted(AbstractAsyncOperation.this);
-					}
-					catch ( Throwable ignored ) {
-						m_listeners.remove(listener);
-					}
-				}
-			});
-		}
-	}
-	
-	private void notifyFinishedToListeners(final AsyncOperationState state) {
-		for ( final AsyncOperationListener listener: m_listeners ) {
-			Utilities.executeAsynchronously(m_executor, new Runnable() {
-				@Override public void run() {
-					try {
-						listener.onAsyncOperationFinished(AbstractAsyncOperation.this, state);
-					}
-					catch ( Throwable ignored ) {
-						System.err.println(ignored);
-					}
-				}
-			});
-		}
-		
-		m_listeners.clear();
+	private void postStateChangeEvent(final AsyncOperationState state) {
+		AsyncOperationStateChangeEvent<T> changed = new AsyncOperationStateChangeEvent<>(this, state);
+		Utilities.runAsync(() -> m_channel.post(changed), m_executor);
 	}
 	
 	private boolean isReallyFinished() {
@@ -962,18 +926,17 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
             long remainsNano = dueNano - System.nanoTime();
             if ( remainsNano <= 0 ) {
             	setStateInGuard(RUNNING);
-            	notifyStartedToListeners();
+            	postStateChangeEvent(AsyncOperationState.RUNNING);
     			
     			return;
             }
             
             try {
-				m_cond.await(remainsNano, TimeUnit.NANOSECONDS);
+				m_aopCond.await(remainsNano, TimeUnit.NANOSECONDS);
 			}
 			catch ( InterruptedException e ) {
             	setStateInGuard(RUNNING);
-            	
-            	notifyStartedToListeners();
+            	postStateChangeEvent(AsyncOperationState.RUNNING);
 			}
 		}
 	}

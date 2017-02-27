@@ -26,18 +26,19 @@ import utils.thread.CamusExecutor;
  *
  * @author Kang-Woo Lee (ETRI)
  */
-public class PeriodicAsyncOperation extends AbstractAsyncOperation<Void> implements AsyncOperation<Void> {
+public class PeriodicAsyncOperation<T> extends AbstractAsyncOperation<T>
+										implements AsyncOperation<T> {
 	static final Logger s_logger = Logger.getLogger("AOP.PERIODIC");
 
 	public static final int FOREVER = -1;
 
-	private final Supplier<AsyncOperation<?>> m_supplier;
+	private final Supplier<AsyncOperation<T>> m_supplier;
 	private final long m_initDelay;
 	private final long m_delay;
 	private final CamusExecutor m_executor;
 
 	private final Object m_mutex = new Object();
-	private AsyncOperation<?> m_aop;				// guarded by m_mutex
+	private AsyncOperation<T> m_aop;			// guarded by m_mutex
 	private int m_remains;						// guarded by m_mutex
 	private Future<?> m_future;					// guarded by m_mutex
 	private final Listener m_listener;
@@ -63,7 +64,7 @@ public class PeriodicAsyncOperation extends AbstractAsyncOperation<Void> impleme
 	 * 					<code>null</code>인 경우. {@literal initDelay} 또는 {@literal delay}가
 	 * 					음수인 경우.
 	 */
-	public PeriodicAsyncOperation(Supplier<AsyncOperation<?>> supplier, long initDelay, long delay,
+	public PeriodicAsyncOperation(Supplier<AsyncOperation<T>> supplier, long initDelay, long delay,
 									int count, CamusExecutor executor) {
 		super(executor);
 
@@ -140,23 +141,21 @@ public class PeriodicAsyncOperation extends AbstractAsyncOperation<Void> impleme
 				m_aop.start();
 			}
 			catch ( final Throwable fault ) {
-				Utilities.executeAsynchronously(m_executor, new Runnable() {
-					public void run() {
-						final PeriodicAsyncOperation _this = PeriodicAsyncOperation.this;
+				Utilities.runAsync(() -> {
+					final PeriodicAsyncOperation<T> _this = PeriodicAsyncOperation.this;
 
-						if ( getState() == AsyncOperationState.NOT_STARTED ) {
-							_this.notifyOperationStarted();
+					if ( getState() == AsyncOperationState.NOT_STARTED ) {
+						_this.notifyOperationStarted();
 
-							try {
-								waitForStarted();
-							}
-							catch ( InterruptedException e ) {
-								Thread.currentThread().interrupt();
-							}
+						try {
+							waitForStarted();
 						}
-						_this.notifyOperationFailed(fault);
+						catch ( InterruptedException e ) {
+							Thread.currentThread().interrupt();
+						}
 					}
-				});
+					_this.notifyOperationFailed(fault);
+				}, m_executor);
 			}
 		}
 	}
@@ -172,12 +171,12 @@ public class PeriodicAsyncOperation extends AbstractAsyncOperation<Void> impleme
 		}
 	};
 
-	class Listener implements AsyncOperationListener<Void> {
-		@Override public void onAsyncOperationStarted(AsyncOperation<Void> aop) { }
+	class Listener implements AsyncOperationListener<T> {
+		@Override public void onAsyncOperationStarted(AsyncOperation<T> aop) { }
 
 		@Override
-		public void onAsyncOperationFinished(AsyncOperation<Void> aop, AsyncOperationState state) {
-			final PeriodicAsyncOperation _this = PeriodicAsyncOperation.this;
+		public void onAsyncOperationFinished(AsyncOperation<T> aop, AsyncOperationState state) {
+			final PeriodicAsyncOperation<T> _this = PeriodicAsyncOperation.this;
 
 			switch ( state ) {
 				case COMPLETED:
@@ -188,7 +187,7 @@ public class PeriodicAsyncOperation extends AbstractAsyncOperation<Void> impleme
 						synchronized ( m_mutex ) {
 							// 수행 횟수에 제한이 있는 경우 이를 체크한다.
 							if ( --m_remains == 0 ) {
-								Void result = null;
+								T result = null;
 								try {
 									result = aop.getResult();
 								}

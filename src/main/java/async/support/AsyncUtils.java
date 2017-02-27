@@ -6,16 +6,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
-import javax.jws.Oneway;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.eventbus.Subscribe;
 
 import async.AsyncOperation;
 import async.Service;
 import async.ServiceState;
+import async.ServiceStateChangeEvent;
 import async.ServiceStateChangeListener;
 import async.optor.ConcurrentService;
 import utils.Errors;
@@ -112,10 +112,10 @@ public class AsyncUtils {
 	
 	public static final void setFailureDependency(Service dependee, AbstractService dependent) {
 		dependee.addStateChangeListener(new ServiceStateChangeListener() {
-			@Override @Oneway
-			public void onStateChanged(Service target, ServiceState fromState, ServiceState toState) {
-				if ( toState == ServiceState.FAILED ) {
-					dependent.notifyServiceFailed(target.getFailureCause());
+			@Subscribe
+			public void onServiceStateChange(ServiceStateChangeEvent event) {
+				if ( event.getToState() == ServiceState.FAILED ) {
+					dependent.notifyServiceFailed(event.getService().getFailureCause());
 				}
 			}
 		});
@@ -136,7 +136,7 @@ public class AsyncUtils {
 		link.m_dependee.removeStateChangeListener(link);
 	}
 	
-	static class Propagator implements ServiceStateChangeListener {
+	static class Propagator {
 		private static final Logger s_logger = LoggerFactory.getLogger("STARTABLE.CHAIN");
 		
 		private final Service m_dependee;
@@ -151,9 +151,11 @@ public class AsyncUtils {
 			return m_dependee;
 		}
 		
-		@Override @Oneway
-		public void onStateChanged(Service target, ServiceState fromState, ServiceState toState) {
-			switch ( toState ) {
+		@Subscribe
+		public void onStateChanged(ServiceStateChangeEvent event) {
+			final Service target = event.getService();
+			
+			switch ( event.getToState() ) {
 				case RUNNING:
 					Utilities.runAsync(() -> {
 						try {

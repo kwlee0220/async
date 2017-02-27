@@ -18,6 +18,7 @@ repositories {
 
 dependencies {
 	compile project(":utils")
+	compile project(":event")
 	
 	testCompile "junit:junit:4.12"
 }

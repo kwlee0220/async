@@ -5,14 +5,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.collect.Lists;
+import com.google.common.eventbus.Subscribe;
 
 import async.Service;
 import async.ServiceState;
-import async.ServiceStateChangeListener;
+import async.ServiceStateChangeEvent;
 import async.support.AbstractService;
 import utils.Errors;
 
@@ -23,7 +23,6 @@ import utils.Errors;
  */
 public class CompositeService extends AbstractService {
 	private final List<Service> m_components;
-	private final List<ServiceStateChangeListener> m_listeners;
 	
 	private final ReentrantLock m_compositeLock = new ReentrantLock();
 	private final Condition m_cond = m_compositeLock.newCondition();
@@ -39,13 +38,12 @@ public class CompositeService extends AbstractService {
 		}
 
 		m_components = Lists.newArrayList(components);
-		m_listeners = IntStream.range(0, m_components.size())
-								.mapToObj(idx -> {
-									ServiceStateChangeListener listener = new ComonentListener(idx);
-									m_components.get(idx).addStateChangeListener(listener);
-									return listener;
-								})
-								.collect(Collectors.toList());
+		IntStream.range(0, m_components.size())
+					.forEach(idx -> {
+						ComonentListener listener
+									= new ComonentListener(CompositeService.this, idx);
+						m_components.get(idx).addStateChangeListener(listener);
+					});
 	}
 
 	@Override
@@ -65,20 +63,22 @@ public class CompositeService extends AbstractService {
 		m_components.parallelStream().forEach(Service::stop);
 	}
 	
-	class ComonentListener implements ServiceStateChangeListener {
+	private static class ComonentListener {
+		private final CompositeService m_composite;
 		private final int m_idx;
 		
-		ComonentListener(int idx) {
+		private ComonentListener(CompositeService composite, int idx) {
+			m_composite = composite;
 			m_idx = idx;
 		}
 
-		@Override
-		public void onStateChanged(Service target, ServiceState fromState, ServiceState toState) {
-			if ( toState == ServiceState.FAILED ) {
-				CompositeService.this.notifyServiceFailed(target.getFailureCause());
+		@Subscribe
+		public void onStateChanged(ServiceStateChangeEvent event) {
+			if ( event.getToState() == ServiceState.FAILED ) {
+				m_composite.notifyServiceFailed(event.getService().getFailureCause());
 			}
-			else if ( toState == ServiceState.STOPPED ) {
-				CompositeService.this.stop();
+			else if ( event.getToState() == ServiceState.STOPPED ) {
+				m_composite.stop();
 			}
 		}
 	}

@@ -5,9 +5,13 @@ import java.util.concurrent.locks.Condition;
 
 import org.apache.log4j.Logger;
 
+import com.google.common.base.Preconditions;
+import com.google.common.eventbus.Subscribe;
+
 import async.AsyncOperation;
 import async.AsyncOperationListener;
 import async.AsyncOperationState;
+import async.AsyncOperationStateChangeEvent;
 import async.support.AbstractAsyncOperation;
 import net.jcip.annotations.GuardedBy;
 import utils.ExceptionUtils;
@@ -160,6 +164,43 @@ public class DelayedAsyncOperation<T> extends AbstractAsyncOperation<T>
 					s_logger.debug("started: delayed aop=" + m_aop);
 				}
 			}
+		}
+	}
+	
+	@Subscribe
+	public void onDelayedAopStateChanged(AsyncOperationStateChangeEvent<T> event) {
+		Preconditions.checkNotNull(event);
+		Preconditions.checkArgument(event.getAsyncOperation() == m_aop);
+
+		final AsyncOperationState toState = event.getToState();
+		switch ( toState ) {
+			case COMPLETED:
+				T result = null;
+				try {
+					result = m_aop.getResult();
+				}
+				catch ( Throwable ignored ) {
+					s_logger.warn("fails to get DelayedAsyncOperation result, cause={}",
+									ExceptionUtils.unwrapThrowable(ignored));
+				}
+				notifyOperationCompleted(result);
+				break;
+			case CANCELLED:
+				notifyOperationCancelled();
+				break;
+			case FAILED:
+				Throwable cause = null;
+				try {
+					cause = m_aop.getFailureCause();
+				}
+				catch ( Throwable ignored ) {
+					s_logger.warn("fails to get DelayedAsyncOperation fault cause, cause={}", 
+									ExceptionUtils.unwrapThrowable(ignored));
+				}
+				notifyOperationFailed(cause);
+				break;
+			default:
+				throw new RuntimeException();
 		}
 	}
 

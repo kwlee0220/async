@@ -5,6 +5,7 @@ import java.util.concurrent.Executor;
 
 import async.OperationSchedulerProvider;
 import async.OperationStoppedException;
+import net.jcip.annotations.GuardedBy;
 import utils.Utilities;
 
 
@@ -46,55 +47,122 @@ import utils.Utilities;
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public abstract class ThreadedAsyncOperation<T> extends AbstractAsyncOperation<T> {
+public class ThreadedAsyncOperation<T> extends AbstractAsyncOperation<T> {
 	private volatile Thread m_worker = null;
+	private final Operation<T> m_op;
+	@GuardedBy("m_aopLock") private boolean m_cancelRequested = false;
 	
-	protected abstract T executeOperation() throws OperationStoppedException, ExecutionException;
-	
-	protected ThreadedAsyncOperation() { }
-	
-	protected ThreadedAsyncOperation(Executor executor) {
-		super(executor);
+	@FunctionalInterface
+	public static interface Operation<T> {
+		public T run(Callback cb) throws OperationStoppedException, Exception;
 	}
 	
-	protected ThreadedAsyncOperation(OperationSchedulerProvider scheduler) {
+	public ThreadedAsyncOperation(Operation<T> op) {
+		m_op = op;
+	}
+	
+	public ThreadedAsyncOperation(Operation<T> op, Executor executor) {
+		super(executor);
+		
+		m_op = op;
+	}
+	
+	public ThreadedAsyncOperation(Operation<T> op, OperationSchedulerProvider scheduler) {
 		super(scheduler);
+		
+		m_op = op;
+	}
+	
+	public final Thread getWorkerThread() {
+		return m_worker;
 	}
 
 	@Override
 	protected final void startOperation() throws Throwable {
-		Utilities.executeAsynchronously(getExecutor(), new ThreadedTask());
+		Utilities.runAsync(new ThreadedOperation<>(this), getExecutor());
 	}
 	
-	protected final Thread getWorkerThread() {
-		return m_worker;
-	}
-	
-	class ThreadedTask implements Runnable {
-		public void run() {
-			ThreadedAsyncOperation<T> _this = ThreadedAsyncOperation.this;
+	@Override
+	protected void cancelOperation() {
+		m_aopLock.lock();
+		try {
+			m_cancelRequested = true;
+			m_worker.interrupt();
 			
-			m_worker = Thread.currentThread();
+			while ( m_cancelRequested ) {
+				try {
+					m_aopCond.await();
+				}
+				catch ( InterruptedException e ) {
+					throw new RuntimeException("canceling thread has been interrupted");
+				}
+			}
+		}
+		finally {
+			m_aopLock.unlock();
+		}
+	}
+	
+	public static class Callback {
+		private final ThreadedAsyncOperation<?> m_aop;
+		
+		Callback(ThreadedAsyncOperation<?> aop) {
+			m_aop = aop;
+		}
+		
+		@GuardedBy("m_aopLock")
+		public boolean isInterrupted() {
+			m_aop.m_aopLock.lock();
+			try {
+				return m_aop.m_cancelRequested;
+			}
+			finally {
+				m_aop.m_aopLock.unlock();
+			}
+		}
+		
+		@GuardedBy("m_aopLock")
+		public void notifyInterrupted() {
+			m_aop.m_aopLock.lock();
+			try {
+				m_aop.m_cancelRequested = false;
+				m_aop.m_aopCond.signalAll();
+			}
+			finally {
+				m_aop.m_aopLock.unlock();
+			}
+		}
+	}
+	
+	static class ThreadedOperation<T> implements Runnable {
+		private final ThreadedAsyncOperation<T> m_aop;
+		
+		private ThreadedOperation(ThreadedAsyncOperation<T> aop) {
+			m_aop = aop;
+		}
+		
+		public void run() {
+			m_aop.m_worker = Thread.currentThread();
 			
 			try {
-				_this.notifyOperationStarted();
+				m_aop.notifyOperationStarted();
 			}
 			catch ( Exception ignored ) { }
 
 			try {
-				T result = _this.executeOperation();
+				T result = m_aop.m_op.run(new Callback(m_aop));
 				
-				_this.notifyOperationCompleted(result);
+				m_aop.notifyOperationCompleted(result);
 			}
 			catch ( OperationStoppedException e ) {
-				_this.notifyOperationCancelled();
+				m_aop.notifyOperationCancelled();
 			}
 			catch ( ExecutionException e ) {
-				_this.notifyOperationFailed(e.getCause());
+				m_aop.notifyOperationFailed(e.getCause());
 			}
 			catch ( Throwable e ) {
-				getLogger().warn("fails to execute ThreadedAsyncOperation: aoo=" + _this
-						+ ", cause=" + e);
+				m_aop.getLogger().warn("fails to execute ThreadedAsyncOperation: aoo={}, cause={}",
+										m_aop, e);
 				e.printStackTrace();
 			}
 		}

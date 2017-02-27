@@ -6,12 +6,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
-import javax.jws.Oneway;
+import com.google.common.eventbus.Subscribe;
 
 import async.FutureCondition;
 import async.Service;
 import async.ServiceState;
-import async.ServiceStateChangeListener;
+import async.ServiceStateChangeEvent;
 import net.jcip.annotations.GuardedBy;
 
 
@@ -44,7 +44,7 @@ public class ServiceStateCondition implements FutureCondition {
 		
 		m_state = statePred.test(target.getState()) ? STATE_WAITING : STATE_DONE;
 		if ( m_state == STATE_WAITING ) {
-			m_target.addStateChangeListener(m_listener);
+			m_target.addStateChangeListener(this);
 		}
 	}
 
@@ -93,21 +93,19 @@ public class ServiceStateCondition implements FutureCondition {
 		}
 	}
 	
-	private final ServiceStateChangeListener m_listener = new ServiceStateChangeListener() {
-		@Override @Oneway
-		public void onStateChanged(Service target, ServiceState fromState, ServiceState toState) {
-			if ( m_statePred.test(toState) ) {
-				m_lock.lock();
-				try {
-					m_state = STATE_DONE;
-					m_cond.signalAll();
-					
-					m_target.removeStateChangeListener(this);
-				}
-				finally {
-					m_lock.unlock();
-				}
+	@Subscribe
+	public void onStateChanged(ServiceStateChangeEvent event) {
+		if ( m_statePred.test(event.getToState()) ) {
+			m_lock.lock();
+			try {
+				m_state = STATE_DONE;
+				m_cond.signalAll();
+				
+				m_target.removeStateChangeListener(this);
+			}
+			finally {
+				m_lock.unlock();
 			}
 		}
-	};
+	}
 }
