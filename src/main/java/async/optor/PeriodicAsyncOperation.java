@@ -106,7 +106,7 @@ public class PeriodicAsyncOperation<T> extends AbstractAsyncOperation<T>
 	}
 
 	@Override
-	protected void cancelOperation() {
+	protected void stopOperation() {
 		synchronized ( m_mutex ) {
 			if ( m_initDelay > 0 ) {
 				while ( m_future == null ) {

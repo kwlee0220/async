@@ -39,13 +39,19 @@ public interface AsyncOperation<T> {
 	 */
 	public void cancel();
 	
+	public default boolean isNotStarted() {
+		return getState() == AsyncOperationState.NOT_STARTED;
+	}
+	
 	/**
 	 * 비동기 연산이 수행 중인가를 반환한다.
 	 * 
 	 * @return	비동기 연산의 상태가 {@link AsyncOperationState#RUNNING}인 경우는 <code>true</code>,
 	 * 			그렇지 않은 경우는 <code>false</code>.
 	 */
-	public boolean isRunning();
+	public default boolean isRunning() {
+		return getState() == AsyncOperationState.RUNNING;
+	}
 	
 	/**
 	 * 본 비동기 연산의 종료 여부를 반환한다.
@@ -55,7 +61,16 @@ public interface AsyncOperation<T> {
 	 * 
 	 * @return	종료 여부.
 	 */
-	public boolean isFinished();
+	public default boolean isFinished() {
+		switch ( getState() ) {
+			case COMPLETED:
+			case FAILED:
+			case CANCELLED:
+				return true;
+			default:
+				return false;
+		}
+	}
 	
 	/**
 	 * 본 비동기 연산의 성공적 완료 여부를 반환한다.
@@ -64,7 +79,9 @@ public interface AsyncOperation<T> {
 	 * 
 	 * @return	완료 여부.
 	 */
-	public boolean isCompleted();
+	public default boolean isCompleted() {
+		return getState() == AsyncOperationState.COMPLETED;
+	}
 	
 	/**
 	 * 본 비동기 연산 수행의 취소 여부를 반환한다.
@@ -73,7 +90,9 @@ public interface AsyncOperation<T> {
 	 * 
 	 * @return	종료 여부.
 	 */
-	public boolean isCancelled();
+	public default boolean isCancelled() {
+		return getState() == AsyncOperationState.CANCELLED;
+	}
 	
 	/**
 	 * 본 비동기 연산 수행 실패 여부를 반환한다.
@@ -82,7 +101,9 @@ public interface AsyncOperation<T> {
 	 * 
 	 * @return	실패 여부.
 	 */
-	public boolean isFailed();
+	public default boolean isFailed() {
+		return getState() == AsyncOperationState.FAILED;
+	}
 	
 	/**
 	 * 본 비동기 연산의 상태를 반환한다.

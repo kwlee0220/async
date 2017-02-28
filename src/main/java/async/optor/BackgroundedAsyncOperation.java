@@ -2,15 +2,11 @@ package async.optor;
 
 import java.util.concurrent.Executor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Preconditions;
-import com.google.common.eventbus.Subscribe;
+import org.apache.log4j.Logger;
 
 import async.AsyncOperation;
+import async.AsyncOperationListener;
 import async.AsyncOperationState;
-import async.AsyncOperationStateChangeEvent;
 import async.support.AbstractAsyncOperation;
 import utils.ExceptionUtils;
 
@@ -29,9 +25,8 @@ import utils.ExceptionUtils;
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public class BackgroundedAsyncOperation<T> extends AbstractAsyncOperation<T>
-											implements AsyncOperation<T> {
-	private static final Logger s_logger = LoggerFactory.getLogger("AOP.BACKGROUND");
+public class BackgroundedAsyncOperation<T> extends AbstractAsyncOperation<T> implements AsyncOperation<T> {
+	private static final Logger s_logger = Logger.getLogger("AOP.BACKGROUND");
 	
 	private final AsyncOperation<T> m_fgAop;
 	private final AsyncOperation<?> m_bgAop;
@@ -49,11 +44,15 @@ public class BackgroundedAsyncOperation<T> extends AbstractAsyncOperation<T>
 										Executor executor) {
 		super(executor);
 		
-		Preconditions.checkNotNull(fgAop, "foreground aop was null");
-		Preconditions.checkNotNull(bgAop, "background aop was null");
+		if ( fgAop == null ) {
+			throw new IllegalArgumentException("foreground aop was null");
+		}
+		if ( bgAop == null ) {
+			throw new IllegalArgumentException("background aop was null");
+		}
 
 		m_fgAop = fgAop;
-		m_fgAop.addAsyncOperationListener(this);
+		m_fgAop.addAsyncOperationListener(new ForegroundListener());
 		m_bgAop = bgAop;
 	}
 	
@@ -71,7 +70,7 @@ public class BackgroundedAsyncOperation<T> extends AbstractAsyncOperation<T>
 			m_bgAop.start();
 		}
 		catch ( Exception ignored ) {
-			s_logger.warn("failed to start background aop={}", m_bgAop);
+			s_logger.warn("failed to start background aop=" + m_bgAop);
 		}
 		
 		m_fgAop.start();
@@ -80,57 +79,52 @@ public class BackgroundedAsyncOperation<T> extends AbstractAsyncOperation<T>
 	}
 
 	@Override
-	protected void cancelOperation() {
+	protected void stopOperation() {
 		m_fgAop.cancel();
 		m_bgAop.cancel();
 	}
 	
-	@Subscribe
-	public void onForegroundAopStateChanged(AsyncOperationStateChangeEvent<T> event) {
-		Preconditions.checkNotNull(event);
-		Preconditions.checkArgument(event.getAsyncOperation() == m_fgAop);
-		
-		final AsyncOperationState toState = event.getToState();
-		
-		if ( toState == AsyncOperationState.RUNNING ) {
-			notifyOperationStarted();
+	class ForegroundListener implements AsyncOperationListener<T> {
+		@Override public void onAsyncOperationStarted(AsyncOperation<T> aop) {
+			BackgroundedAsyncOperation.this.notifyOperationStarted();
 		}
-		else if ( toState == AsyncOperationState.COMPLETED ) {
+
+		@Override
+		public void onAsyncOperationFinished(AsyncOperation<T> aop, AsyncOperationState state) {
+			final BackgroundedAsyncOperation<T> _this = BackgroundedAsyncOperation.this;
+			
 			// foreground가 종료되면 무조건 background aop를 종료시킨다.
 			m_bgAop.cancel();
 			
-			T result = null;
-			try {
-				result = m_fgAop.getResult();
+			switch ( state ) {
+				case COMPLETED:
+					T result = null;
+					try {
+						result = aop.getResult();
+					}
+					catch ( Throwable ignored ) {
+						s_logger.warn("fails to get BackgroundedAsyncOperation result, cause="
+										+ ExceptionUtils.unwrapThrowable(ignored));
+					}
+					_this.notifyOperationCompleted(result);
+					break;
+				case FAILED:
+					Throwable cause = null;
+					try {
+						cause = aop.getFailureCause();
+					}
+					catch ( Throwable ignored ) {
+						s_logger.warn("fails to get BackgroundedAsyncOperation fault cause, cause="
+										+ ExceptionUtils.unwrapThrowable(ignored));
+					}
+					_this.notifyOperationFailed(cause);
+					break;
+				case CANCELLED:
+					_this.notifyOperationCancelled();
+					break;
+				default:
+					throw new RuntimeException();
 			}
-			catch ( Throwable ignored ) {
-				s_logger.warn("fails to get BackgroundedAsyncOperation result, cause={}",
-								ExceptionUtils.unwrapThrowable(ignored));
-			}
-			notifyOperationCompleted(result);
-		}
-		else if ( toState == AsyncOperationState.FAILED ) {
-			// foreground가 종료되면 무조건 background aop를 종료시킨다.
-			m_bgAop.cancel();
-			
-			Throwable cause = null;
-			try {
-				cause = m_fgAop.getFailureCause();
-			}
-			catch ( Throwable ignored ) {
-				s_logger.warn("fails to get BackgroundedAsyncOperation fault cause, cause={}",
-								ExceptionUtils.unwrapThrowable(ignored));
-			}
-			notifyOperationFailed(cause);
-		}
-		else if ( toState == AsyncOperationState.CANCELLED ) {
-			// foreground가 종료되면 무조건 background aop를 종료시킨다.
-			m_bgAop.cancel();
-			
-			notifyOperationCancelled();
-		}
-		else {
-			throw new AssertionError();
 		}
 	}
 }

@@ -10,7 +10,6 @@ import async.AsyncOperationState;
 import async.support.AbstractAsyncOperation;
 import net.jcip.annotations.GuardedBy;
 import utils.ExceptionUtils;
-import utils.Utilities;
 
 
 
@@ -113,7 +112,7 @@ public class SequentialAsyncOperation extends AbstractAsyncOperation implements 
 	}
 
 	@Override
-	protected void cancelOperation() {
+	protected void stopOperation() {
 		synchronized ( m_seqMutex ) {
 			m_stopRequested = true;
 			if ( m_cursor >= 0 && m_cursor < m_elements.length ) {

@@ -162,7 +162,7 @@ public class ConcurrentAsyncOperation extends AbstractAsyncOperation
 	}
 
 	@Override
-	protected void cancelOperation() {
+	protected void stopOperation() {
 		m_aopLock.lock();
 		try {
 			// 멤버 aop들의 수행을 중단시킨다.

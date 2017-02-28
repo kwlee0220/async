@@ -32,7 +32,7 @@ public class AsyncCompletableFuture<T> extends AbstractAsyncOperation<T> {
 	}
 
 	@Override
-	protected void cancelOperation() {
+	protected void stopOperation() {
 		m_future.cancel(true);
 		this.notifyOperationCancelled();
 	}

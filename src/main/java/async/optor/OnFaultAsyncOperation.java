@@ -50,7 +50,7 @@ public class OnFaultAsyncOperation<T> extends AbstractAsyncOperation<T> implemen
 	}
 
 	@Override
-	protected void cancelOperation() {
+	protected void stopOperation() {
 		synchronized ( this ) {
 			if ( m_fault != null ) {
 				m_faultHandler.cancel();

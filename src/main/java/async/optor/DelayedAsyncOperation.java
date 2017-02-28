@@ -27,7 +27,7 @@ import utils.thread.CamusExecutor;
  * @author Kang-Woo Lee (ETRI)
  */
 public class DelayedAsyncOperation<T> extends AbstractAsyncOperation<T>
-									implements AsyncOperation<T> {
+										implements AsyncOperation<T> {
 	static final Logger s_logger = Logger.getLogger("AOP.DELAYED");
 
 	private final AsyncOperation<T> m_aop;
@@ -119,7 +119,7 @@ public class DelayedAsyncOperation<T> extends AbstractAsyncOperation<T>
 	}
 
 	@Override
-	protected void cancelOperation() {
+	protected void stopOperation() {
 		m_aopLock.lock();
 		try {
 			while ( m_future == null ) {

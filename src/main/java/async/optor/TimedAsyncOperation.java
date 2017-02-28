@@ -163,7 +163,7 @@ public class TimedAsyncOperation<T> extends AbstractAsyncOperation<T> implements
 	}
 
 	@Override
-	protected void cancelOperation() {
+	protected void stopOperation() {
 		synchronized ( m_imutex ) {
 			// 시간초과 처리 작업 중인 경우는 처리 작업이 완료될 때까지 대기한다.
 			while ( m_istate == STATE_TIMEOUT_STOP_BEGIN ) {

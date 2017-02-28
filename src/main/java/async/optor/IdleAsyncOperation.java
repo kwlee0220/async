@@ -97,7 +97,7 @@ public class IdleAsyncOperation extends AbstractAsyncOperation<Void> {
 	}
 
 	@Override
-	protected synchronized void cancelOperation() {
+	protected synchronized void stopOperation() {
 		if ( m_future.cancel(false) ) {
 			notifyOperationCancelled();
 		}

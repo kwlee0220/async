@@ -40,7 +40,7 @@ import utils.thread.ExecutorAware;
  * 		통보 메소드는  본 메소드 수행 쓰레드에서 호출될 필요는 없고, 비동기적으로 메소드 반환 후
  * 		다른 쓰레드에서 호출되어도 무방하다.
  * 		본 메소드는  '{@link #m_aopLock}'을 획득하지 않은 상태에서 호출된다.</dd>
- * 	<dt>{@link #cancelOperation()}:</dt>
+ * 	<dt>{@link #stopOperation()}:</dt>
  * 	<dd>비동기 연산을 중지시킬 때 구현하는 추상 메소드. {@link #cancel()} 메소드 호출로 인해 호출된다.
  * 		메소드 구현시 연산 취소를 요청한 후 바로 반환되어도 무방하다. 그러나 비동기 연산이 성공적으로
  * 		중지되면 {@link #notifyOperationCancelled()}를 호출하여 이를 알려야 한다.
@@ -162,7 +162,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	 * <br>
 	 * 본 메소드는 '{@link #m_aopLock}'을 획득하지 않은 상태에서 호출된다.
 	 */
-	protected abstract void cancelOperation();
+	protected abstract void stopOperation();
 	
 	/**
 	 * {@link #markCancelled()} 호출로 인해 연산 취소가 mark되었을 때의 작업을 수행한다.
@@ -348,9 +348,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 		
 		m_aopLock.lock();
 		try {
-			if ( getLogger().isDebugEnabled() ) {
-				getLogger().debug("stopping: aop=" + this + ", state=" + STATE_STR[m_state]);
-			}
+			getLogger().debug("stopping: aop={}, state={}", this, STATE_STR[m_state]);
 			
 			if ( m_state > RUNNING ) {
 				// 이미 종료된 경우거나 취소 중인 경우는 바로 리턴한다.
@@ -378,10 +376,8 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 		}
 		
 		if ( invokeStopCall ) {
-			if ( getLogger().isDebugEnabled() ) {
-				getLogger().debug("cancelling: " + this);
-			}
-			cancelOperation();
+			getLogger().debug("cancelling: {}", this);
+			stopOperation();
 			
 			// 원래 코드에는 없었는데, stop()이 호출될 때 'STOPPED' 상태로 전이되지 않아서
 			// 최근들어 수정된 부분 좀 더 자세한 체크가 필요하다.
@@ -404,7 +400,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	 * 본 연산이 취소되었음을 알린다.
 	 * <p>
 	 * 연산 취소가 마킹되면 기본적으로 {@link #cancel()}과 거의 동일한 작업이 수행되지만
-	 * {@link #cancelOperation()}이 호출되는 대신 {@link #onOperationMarkCancelled()}가
+	 * {@link #stopOperation()}이 호출되는 대신 {@link #onOperationMarkCancelled()}가
 	 * 호출된다
 	 */
 	public void markCancelled() {
@@ -444,61 +440,6 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 		m_aopLock.lock();
 		try {
 			return STATES[m_state];
-		}
-		finally {
-			m_aopLock.unlock();
-		}
-	}
-
-	@Override
-	public boolean isRunning() {
-		m_aopLock.lock();
-		try {
-			return m_state == RUNNING;
-		}
-		finally {
-			m_aopLock.unlock();
-		}
-	}
-
-	@Override
-	public boolean isFinished() {
-		m_aopLock.lock();
-		try {
-			return m_state > RUNNING;
-		}
-		finally {
-			m_aopLock.unlock();
-		}
-	}
-
-	@Override
-	public boolean isCompleted() {
-		m_aopLock.lock();
-		try {
-			return m_state == COMPLETED;
-		}
-		finally {
-			m_aopLock.unlock();
-		}
-	}
-
-	@Override
-	public boolean isCancelled() {
-		m_aopLock.lock();
-		try {
-			return m_state > CANCELLING;
-		}
-		finally {
-			m_aopLock.unlock();
-		}
-	}
-
-	@Override
-	public boolean isFailed() {
-		m_aopLock.lock();
-		try {
-			return m_state == FAILED;
 		}
 		finally {
 			m_aopLock.unlock();
@@ -623,7 +564,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	 * 일반적으로 <code>startOperation()</code>가 호출되었을 때 호출되고, 성공적으로 호출되면
 	 * 비동기 연산의 상태는 {@link AsyncOperationState#RUNNING}이 된다.
 	 */
-	public final void notifyOperationStarted() {
+	public final AsyncOperationState notifyOperationStarted() {
 		// 여기에 올 수 있는 상태는
 		//	'PERMIT_WAITING': 정상적으로 시작 작업이 완료된 경우
 		//	'DELAYED_STOPPING': 지연 취소 중인 경우.
@@ -640,9 +581,10 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 				case COMPLETED:
 				case CANCELLED:
 				case FAILED:
-					return;
+					getLogger().debug("notifyOperationStarted() is called but already finished: aop={}", this);
+					return STATES[m_state];
 				default:
-					throw new RuntimeException("Illegal aop state=" + m_state);
+					throw new AssertionError("Illegal aop state=" + m_state);
 			}
         	postStateChangeEvent(AsyncOperationState.RUNNING);
 		}
@@ -650,9 +592,8 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 			m_aopLock.unlock();
 		}
 
-		if ( getLogger().isDebugEnabled() ) {
-			getLogger().debug("started: aop=" + this);
-		}
+		getLogger().debug("started: aop={}", this);
+		return STATES[m_state];
 	}
 	
 	/**

@@ -18,7 +18,9 @@ import utils.ExceptionUtils;
 public abstract class AbstractAsyncClosure<T> extends ThreadedAsyncOperation<T> {
 	private static final Logger s_logger = Logger.getLogger("ASYNC.RUNNABLE");
 	
-	static enum ThreadState { NOT_STARTED, RUNNING, COMPLETED, CANCELLING, CANCELLED, FAILED };
+	private  static enum ThreadState {
+		NOT_STARTED, RUNNING, COMPLETED, CANCELLING, CANCELLED, FAILED
+	};
 	
 	private final Runnable m_canceler;
 	
@@ -58,7 +60,7 @@ public abstract class AbstractAsyncClosure<T> extends ThreadedAsyncOperation<T> 
 	}
 
 	@Override
-	protected void cancelOperation() {
+	protected void stopOperation() {
 		m_stateLock.lock();
 		try {
 			waitWhileInGuard(ThreadState.NOT_STARTED);

@@ -32,7 +32,7 @@ public class NopAsyncOperation extends AbstractAsyncOperation implements AsyncOp
 	}
 
 	@Override
-	protected void cancelOperation() {
+	protected void stopOperation() {
 		super.notifyOperationCancelled();
 	}
 	
