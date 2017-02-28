@@ -154,7 +154,7 @@ public class TimedAsyncOperation<T> extends AbstractAsyncOperation<T> implements
 													+ getClass().getName());
 			}
 			
-			m_aop.addAsyncOperationListener(new TargetAopListener());
+			m_aop.addStateChangeListener(new TargetAopListener());
 			m_aop.start();
 			m_future = m_cexecutor.schedule(new TimeoutTask(), m_timeout);
 
@@ -271,7 +271,7 @@ public class TimedAsyncOperation<T> extends AbstractAsyncOperation<T> implements
 									return;
 								}
 								setExecutorIfNeeded(m_timeoutAop);
-								m_timeoutAop.addAsyncOperationListener(new TimeoutAopListener());
+								m_timeoutAop.addStateChangeListener(new TimeoutAopListener());
 								
 								m_istate = STATE_TIMEOUT_STOP_END;
 								m_timeoutAop.start();

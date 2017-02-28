@@ -104,7 +104,7 @@ public class SequentialAsyncOperation extends AbstractAsyncOperation implements 
 	protected void startOperation() {
 		synchronized ( m_seqMutex ) {
 			m_cursor = 0;
-			m_elements[0].addAsyncOperationListener(m_listener);
+			m_elements[0].addStateChangeListener(m_listener);
 			m_elements[0].start();
 		}
 		
@@ -143,7 +143,7 @@ public class SequentialAsyncOperation extends AbstractAsyncOperation implements 
 								_this.notifyOperationCancelled();
 							}
 							else {
-								m_elements[m_cursor].addAsyncOperationListener(m_listener);
+								m_elements[m_cursor].addStateChangeListener(m_listener);
 								m_elements[m_cursor].start();
 							}
 						}

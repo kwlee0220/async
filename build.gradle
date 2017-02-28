@@ -20,7 +20,7 @@ dependencies {
 	compile project(":utils")
 	compile project(":event")
 	
-	testCompile "junit:junit:4.12"
+	testCompile "junit:junit:${junit_version}"
 }
 
 task sourceJar(type: Jar) {

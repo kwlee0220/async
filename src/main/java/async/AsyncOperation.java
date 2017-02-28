@@ -195,25 +195,16 @@ public interface AsyncOperation<T> {
 	public boolean waitForFinished(long timeout) throws InterruptedException, IllegalArgumentException;
 	
 	/**
-	 * 주어진 리스너를 본 비동기 연산에 등록시킨다.
+	 * 주어진 상태 변화 이벤트 리스너를 본 비동기 연산에 등록시킨다.
 	 * <p>
-	 * 등록된 리스너는 본 비동기 연산이 시작되거나 종료될 때 다음과 같은 리스너 메소드가 호출된다.
-	 * <ul>
-	 * 	<li> {@link AsyncOperationListener#onAsyncOperationStarted(AsyncOperation) onAsyncOperationStarted}
-	 * 		비동기 연산이 시작되는 경우.
-	 * 	<li> {@link AsyncOperationListener#onAsyncOperationFinished(AsyncOperation, AsyncOperationState) onAsyncOperationFinished}
-	 * 		비동기 연산이 종료되는 경우. 이 경우 해당 리스너의 callback 메소드 호출 후, 자동적으로 리스너를
-	 * 		비동기 연산에서 등록 해제시킨다.
-	 * </ul>
-	 * 리스너 등록 당시 비동기 연산이 이미 시작된 경우는 바로
-	 * {@link AsyncOperationListener#onAsyncOperationStarted(AsyncOperation) onAsyncOperationStarted}를
-	 * 호출하고, 비동기 연산이 이미 종료된 상태면 바로
-	 * {@link AsyncOperationListener#onAsyncOperationFinished(AsyncOperation, AsyncOperationState) onAsyncOperationFinished}를
-	 * 호출한다.
+	 * 등록된 리스너는 본 비동기 연산이 시작되거나 종료될 때 다음과 같은 상태변화
+	 * 이벤트 ({@link AsyncOperationStateChangeEvent})가 전달된다.
+	 * 리스너 등록 당시 비동기 연산이 이미 시작된 경우는 바로 해당 '시작' 상태변화 이벤트를 발송하고, 비동기 연산이 이미 종료된 상태면
+	 * '종료' 상태변화 이벤트를 발송한다.
 	 * 
 	 * @param listener	등록시킬 리스너 객체.
 	 */
-	public void addAsyncOperationListener(Object listener);
+	public void addStateChangeListener(Object listener);
 	
 	/**
 	 * 주어진 리스너를 본 비동기 연산에서 등록 해제시킨다.
@@ -222,5 +213,5 @@ public interface AsyncOperation<T> {
 	 * 
 	 * @param listener	등록 해제시킬 리스너 객체.
 	 */
-	public void removeAsyncOperationListener(Object listener);
+	public void removeStateChangeListener(Object listener);
 }

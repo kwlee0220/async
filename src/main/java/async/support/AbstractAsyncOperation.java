@@ -1,6 +1,7 @@
 package async.support;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -9,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.AsyncEventBus;
 
 import async.AsyncOperation;
 import async.AsyncOperationState;
@@ -128,7 +129,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	@GuardedBy("m_aopLock") private Throwable m_fault;
 	@GuardedBy("m_aopLock") private String[] m_capaNameList = null;
 	private volatile OperationSchedulerProvider m_scheduler = null;
-	private final EventBus m_channel = new EventBus();
+	private volatile AsyncEventBus m_changeNotifier;
 	private volatile Executor m_executor;
 	private Logger m_logger = s_logger;
 	
@@ -163,14 +164,6 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	 * 본 메소드는 '{@link #m_aopLock}'을 획득하지 않은 상태에서 호출된다.
 	 */
 	protected abstract void stopOperation();
-	
-	/**
-	 * {@link #markCancelled()} 호출로 인해 연산 취소가 mark되었을 때의 작업을 수행한다.
-	 * <p>
-	 * 본 클래스에서는 아무런 작업을 수행하지 않도록 구현되었기 때문에 별도의 작업이 필요한 경우는
-	 * 하위 클래스에서 재정의하여 사용한다.
-	 */
-	protected void onOperationMarkCancelled() { }
 
 	/**
 	 * 비동기 연산 객체를 초기화한다.
@@ -181,6 +174,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 		m_fault = null;
 		m_executor = null;
 		m_scheduler = null;
+		m_changeNotifier = new AsyncEventBus(Executors.newCachedThreadPool());
 	}
 
 	/**
@@ -198,6 +192,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 		m_fault = null;
 		m_executor = executor;
 		m_scheduler = null;
+		m_changeNotifier = new AsyncEventBus(executor);
 	}
 
 	/**
@@ -215,6 +210,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 		m_fault = null;
 		m_executor = scheduler.getExecutor();
 		m_scheduler = scheduler;
+		m_changeNotifier = new AsyncEventBus(m_executor != null ? m_executor : Executors.newCachedThreadPool());
 	}
 
 	@Override
@@ -222,6 +218,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 		Preconditions.checkNotNull(executor, "executor was null");
 		
 		m_executor = executor;
+		m_changeNotifier = new AsyncEventBus(executor);
 	}
 	
 	/**
@@ -393,45 +390,6 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 		// TODO: stop() 함수에서 직접 notifyStopped() 를 부르는 것이 좀 이상하지만,
 		// 이미 많은 코드가 이것에 의존하기 때문에 지금을 그냥 두고, 나중에
 		// 큰 맘 먹고 수행해야 할 것 같다.
-    	postStateChangeEvent(AsyncOperationState.CANCELLED);
-	}
-	
-	/**
-	 * 본 연산이 취소되었음을 알린다.
-	 * <p>
-	 * 연산 취소가 마킹되면 기본적으로 {@link #cancel()}과 거의 동일한 작업이 수행되지만
-	 * {@link #stopOperation()}이 호출되는 대신 {@link #onOperationMarkCancelled()}가
-	 * 호출된다
-	 */
-	public void markCancelled() {
-		m_aopLock.lock();
-		try {
-			if ( m_state > RUNNING ) {
-				// 이미 종료된 경우거나 취소 중인 경우는 바로 리턴한다.
-				return;
-			}
-			// 남은 상태: NOT_STARTED, STARTING, RUNNING
-
-			if ( m_state == NOT_STARTED || m_state == SCHEDULING || m_state == STARTING ) {
-				// notifyOperationStarted()가 호출되지 않은 상태에서
-				// cancel되는 경우는 'stopOperation()'이 호출되지 않도록 한다.
-				// 경우에 따라서 notifyOperationStarted()는 호출되었으나 m_state 값을 변경시키기
-				// 전에 'stop()'가  호출되는 경우도 있으나 이 경우도 'notifyOperationStarted()'가
-				// 호출되지 않은 것으로 간주한다.
-				// 또한, stopOperation()이 호출되지 않기 때문에 자체적으로 notifyOperationStopped()
-				// 메소드를 직접 호출한다.
-				m_state = CANCELLED;
-			}
-		}
-		finally {
-			m_aopLock.unlock();
-		}
-
-		try {
-			onOperationMarkCancelled();
-		}
-		catch ( Throwable e ) { }
-
     	postStateChangeEvent(AsyncOperationState.CANCELLED);
 	}
 
@@ -768,10 +726,10 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	}
 
 	@Override
-	public final void addAsyncOperationListener(Object listener) {
+	public final void addStateChangeListener(Object listener) {
 		m_aopLock.lock();
 		try {
-			m_channel.register(listener);
+			m_changeNotifier.register(listener);
 			
 			if ( m_state >= RUNNING ) {
             	postStateChangeEvent(AsyncOperationState.RUNNING);
@@ -787,10 +745,10 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	}
 
 	@Override
-	public final void removeAsyncOperationListener(Object listener) {
+	public final void removeStateChangeListener(Object listener) {
 		m_aopLock.lock();
 		try {
-			m_channel.unregister(listener);
+			m_changeNotifier.unregister(listener);
 		}
 		finally {
 			m_aopLock.unlock();
@@ -839,7 +797,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	
 	private void postStateChangeEvent(final AsyncOperationState state) {
 		AsyncOperationStateChangeEvent<T> changed = new AsyncOperationStateChangeEvent<>(this, state);
-		Utilities.runAsync(() -> m_channel.post(changed), m_executor);
+		Utilities.runAsync(() -> m_changeNotifier.post(changed), m_executor);
 	}
 	
 	private boolean isReallyFinished() {

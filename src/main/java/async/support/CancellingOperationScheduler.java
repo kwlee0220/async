@@ -26,7 +26,7 @@ public class CancellingOperationScheduler extends AbstractOperationScheduler {
 
 	@Override
 	public void submit(SchedulableAsyncOperation<?> schedule) {
-		schedule.addAsyncOperationListener(m_listener);
+		schedule.addStateChangeListener(m_listener);
 		notifySubmittedToListeners(schedule);
 		
 		synchronized ( m_schdrMutex ) {
@@ -71,7 +71,7 @@ public class CancellingOperationScheduler extends AbstractOperationScheduler {
 				m_running = null;
 			}
 			
-			aop.removeAsyncOperationListener(m_listener);
+			aop.removeStateChangeListener(m_listener);
 		}
 	};
 }

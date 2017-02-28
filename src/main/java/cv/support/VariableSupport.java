@@ -149,7 +149,7 @@ public final class VariableSupport<T> implements ExecutorAware {
 	}
 	
 	public final void handleLongUpdate(AsyncOperation<Void> aop, final T result) {
-		aop.addAsyncOperationListener(new AsyncOperationListener<Void>() {
+		aop.addStateChangeListener(new AsyncOperationListener<Void>() {
 			@Override public void onAsyncOperationStarted(AsyncOperation<Void> targetAop) { }
 			
 			@Override

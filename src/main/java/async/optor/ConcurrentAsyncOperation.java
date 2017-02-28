@@ -143,7 +143,7 @@ public class ConcurrentAsyncOperation extends AbstractAsyncOperation
 	@Override
 	protected void startOperation() throws Throwable {
 		for ( int i =0; i < m_elements.length; ++i ) {
-			m_elements[i].addAsyncOperationListener(m_listener);
+			m_elements[i].addStateChangeListener(m_listener);
 		}
 		
 		m_aopLock.lock();

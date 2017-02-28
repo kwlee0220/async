@@ -1,6 +1,7 @@
 package async.support;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -8,7 +9,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.eventbus.EventBus;
+import com.google.common.base.Preconditions;
+import com.google.common.eventbus.AsyncEventBus;
 
 import async.Service;
 import async.ServiceState;
@@ -84,12 +86,12 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 	// properties (END)
 	
 	protected volatile Logger m_logger = s_logger;
+	private volatile AsyncEventBus m_channel;
 
 	private final ReentrantLock m_lock = new ReentrantLock();
 	private final Condition m_cond = m_lock.newCondition();
 	@GuardedBy("m_lock") private int m_state = STATE_STOPPED;
 	@GuardedBy("m_lock") private Throwable m_failureCause;
-	@GuardedBy("m_lock") private final EventBus m_channel = new EventBus();
 	
 	/**
 	 * 서비스가 시작할 때 <code>AbstractService</code>에 의해
@@ -122,6 +124,7 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 	protected AbstractService() {
 		m_state = STATE_STOPPED;
 		m_failureCause = null;
+		m_channel = new AsyncEventBus(Executors.newCachedThreadPool());
 	}
 	
 	/**
@@ -134,7 +137,10 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 	 */
 	@Override
 	public void setExecutor(Executor executor) {
+		Preconditions.checkNotNull(executor, "executor was null");
+		
 		m_executor = executor;
+		m_channel = new AsyncEventBus(m_executor);
 	}
 
 	@Override
@@ -142,39 +148,6 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 		m_lock.lock();
 		try {
 			return STATE_MAP[m_state];
-		}
-		finally {
-			m_lock.unlock();
-		}
-	}
-
-	@Override
-	public final boolean isRunning() {
-		m_lock.lock();
-		try {
-			return m_state == STATE_RUNNING;
-		}
-		finally {
-			m_lock.unlock();
-		}
-	}
-
-	@Override
-	public final boolean isStopped() {
-		m_lock.lock();
-		try {
-			return m_state == STATE_STOPPED;
-		}
-		finally {
-			m_lock.unlock();
-		}
-	}
-
-	@Override
-	public final boolean isFailed() {
-		m_lock.lock();
-		try {
-			return m_state == STATE_FAILED;
 		}
 		finally {
 			m_lock.unlock();

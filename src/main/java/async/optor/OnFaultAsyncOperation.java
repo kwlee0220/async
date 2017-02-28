@@ -45,7 +45,7 @@ public class OnFaultAsyncOperation<T> extends AbstractAsyncOperation<T> implemen
 
 	@Override
 	protected void startOperation() throws Throwable {
-		m_aop.addAsyncOperationListener(new Listener());
+		m_aop.addStateChangeListener(new Listener());
 		m_aop.start();
 	}
 

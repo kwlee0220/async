@@ -28,6 +28,7 @@ public abstract class AbstractAsyncClosure<T> extends ThreadedAsyncOperation<T> 
 	private final Condition m_stateChanged = m_stateLock.newCondition();
 	@GuardedBy("m_runnableLock") private ThreadState m_thrdState = ThreadState.NOT_STARTED;
 	@GuardedBy("m_runnableLock") private Throwable m_failure;
+	@GuardedBy("m_runnableLock") private OperationStoppedException m_stopped;
 	
 	protected abstract T runClosure() throws Exception; 
 	
@@ -41,16 +42,26 @@ public abstract class AbstractAsyncClosure<T> extends ThreadedAsyncOperation<T> 
 		try {
 			T result = runClosure();
 			if ( m_canceler == null && Thread.interrupted() ) {
-				markCancelled();
+				m_thrdState = ThreadState.CANCELLED;
 			}
 			
 			return result;
 		}
 		catch ( InterruptedException e ) {
-			markCancelled();
+			m_thrdState = ThreadState.CANCELLED;
+		}
+		catch ( OperationStoppedException e ) {
+			m_stopped = e;
+			m_thrdState = ThreadState.CANCELLED;
 		}
 		catch ( Exception e ) {
-			markFailed(ExceptionUtils.unwrapThrowable(e));
+			Throwable cause = ExceptionUtils.unwrapThrowable(e);
+			if ( cause instanceof InterruptedException ) {
+				m_thrdState = ThreadState.CANCELLED;
+			}
+			else {
+				markFailed(cause);
+			}
 		}
 		finally {
 			leave();
@@ -152,7 +163,7 @@ public abstract class AbstractAsyncClosure<T> extends ThreadedAsyncOperation<T> 
 					m_stateChanged.signalAll();
 					return;
 				case CANCELLED:
-					throw new OperationStoppedException();
+					throw (m_stopped != null) ? m_stopped : new OperationStoppedException();
 				case FAILED:
 					throw new ExecutionException(ExceptionUtils.unwrapThrowable(m_failure));
 				default:

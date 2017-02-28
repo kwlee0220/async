@@ -52,7 +52,7 @@ public class BackgroundedAsyncOperation<T> extends AbstractAsyncOperation<T> imp
 		}
 
 		m_fgAop = fgAop;
-		m_fgAop.addAsyncOperationListener(new ForegroundListener());
+		m_fgAop.addStateChangeListener(new ForegroundListener());
 		m_bgAop = bgAop;
 	}
 	

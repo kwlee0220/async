@@ -158,7 +158,7 @@ public class DelayedAsyncOperation<T> extends AbstractAsyncOperation<T>
 				return;
 			}
 			else {
-				m_aop.addAsyncOperationListener(new Listener());
+				m_aop.addStateChangeListener(new Listener());
 				m_aop.start();
 				if ( s_logger.isDebugEnabled() ) {
 					s_logger.debug("started: delayed aop=" + m_aop);

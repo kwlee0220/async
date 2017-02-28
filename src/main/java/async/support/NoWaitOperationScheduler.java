@@ -29,7 +29,7 @@ public class NoWaitOperationScheduler extends AbstractOperationScheduler {
 
 	@Override
 	public void submit(SchedulableAsyncOperation schedule) {
-		schedule.addAsyncOperationListener(m_listener);
+		schedule.addStateChangeListener(m_listener);
 		notifySubmittedToListeners(schedule);
 		
 		synchronized ( m_schdrMutex ) {
@@ -43,7 +43,7 @@ public class NoWaitOperationScheduler extends AbstractOperationScheduler {
 	public void stopAll() {
 		synchronized ( m_schdrMutex ) {
 			for ( SchedulableAsyncOperation schedule: m_runnings ) {
-				schedule.removeAsyncOperationListener(m_listener);
+				schedule.removeStateChangeListener(m_listener);
 				schedule.cancel();
 			}
 			
@@ -71,7 +71,7 @@ public class NoWaitOperationScheduler extends AbstractOperationScheduler {
 				m_runnings.remove(aop);
 			}
 			
-			aop.removeAsyncOperationListener(m_listener);
+			aop.removeStateChangeListener(m_listener);
 		}
 	};
 }

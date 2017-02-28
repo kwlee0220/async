@@ -137,7 +137,7 @@ public class PeriodicAsyncOperation<T> extends AbstractAsyncOperation<T>
 		synchronized ( m_mutex ) {
 			try {
 				m_aop = m_supplier.get();
-				m_aop.addAsyncOperationListener(m_listener);
+				m_aop.addStateChangeListener(m_listener);
 				m_aop.start();
 			}
 			catch ( final Throwable fault ) {

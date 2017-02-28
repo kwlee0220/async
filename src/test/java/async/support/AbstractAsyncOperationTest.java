@@ -1,13 +1,23 @@
 package async.support;
 
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.eventbus.AllowConcurrentEvents;
+import com.google.common.eventbus.Subscribe;
+
 import async.AsyncOperation;
 import async.AsyncOperationState;
+import async.AsyncOperationStateChangeEvent;
 import edu.emory.mathcs.backport.java.util.concurrent.atomic.AtomicInteger;
+import net.jcip.annotations.GuardedBy;
 import utils.Errors;
+import utils.Lambdas;
 import utils.Utilities;
 
 /**
@@ -23,10 +33,23 @@ public class AbstractAsyncOperationTest {
 	private final AtomicInteger m_providerState = new AtomicInteger();
 	private boolean m_cancelCalled;
 	
+	private final Lock m_lock = new ReentrantLock();
+	private final Condition m_cond = m_lock.newCondition();
+	@GuardedBy("m_lock") private AsyncOperationState m_lastState = AsyncOperationState.NOT_STARTED;
+	
+	@Subscribe @AllowConcurrentEvents
+	public void receive(AsyncOperationStateChangeEvent<Void> event) {
+		Lambdas.guraded(m_lock, () -> {
+			m_lastState = event.getToState();
+			m_cond.signalAll();
+		});
+	}
+	
 	@Before
 	public void setUp() {
 		m_providerState.set(NOT_STARTED);
 		m_cancelCalled = false;
+		
 	}
 	
 	@Test(timeout=800)
@@ -50,6 +73,49 @@ public class AbstractAsyncOperationTest {
 		long ts2 = System.currentTimeMillis();
 		Assert.assertEquals(AsyncOperationState.COMPLETED, aop.getState());
 		Assert.assertTrue(ts2 -ts0 >= 500);
+	}
+	
+	@Test
+	public void testListener1() throws Exception {
+		AsyncOperation<Void> aop = new AbstractAsyncOperation<Void>() {
+			@Override
+			protected void startOperation() throws Throwable {
+				notifyOperationStarted();
+			}
+			@Override protected void stopOperation() { }
+		};
+		
+		aop.start();
+		aop.waitForStarted();
+		Assert.assertEquals(AsyncOperationState.RUNNING, aop.getState());
+		Assert.assertEquals(AsyncOperationState.NOT_STARTED, m_lastState);
+		
+		aop.addStateChangeListener(this);
+		Assert.assertEquals(AsyncOperationState.RUNNING, waitWhile(AsyncOperationState.NOT_STARTED));
+	}
+	
+	@Test
+	public void testListener2() throws Exception {
+		final AsyncOperation<Void> aop = new AbstractAsyncOperation<Void>() {
+			@Override
+			protected void startOperation() throws Throwable {
+				notifyOperationStarted();
+				Utilities.runCheckedAsync(()-> {
+					Thread.sleep(100);
+					notifyOperationCompleted(null);
+				});
+			}
+			@Override protected void stopOperation() { }
+		};
+		
+		aop.start();
+		aop.waitForFinished();
+		Assert.assertEquals(AsyncOperationState.COMPLETED, aop.getState());
+		Assert.assertEquals(AsyncOperationState.NOT_STARTED, m_lastState);
+		
+		aop.addStateChangeListener(this);
+		waitWhile(AsyncOperationState.NOT_STARTED);
+		Assert.assertEquals(AsyncOperationState.COMPLETED, waitWhile(AsyncOperationState.RUNNING));
 	}
 	
 	@Test(expected = IllegalStateException.class)
@@ -136,6 +202,21 @@ public class AbstractAsyncOperationTest {
 		
 		Thread.sleep(500);
 		Assert.assertEquals(END, m_providerState.get());
+	}
+	
+	private AsyncOperationState waitWhile(final AsyncOperationState state)
+		throws InterruptedException {
+		m_lock.lock();
+		try {
+			while ( m_lastState == state ) {
+				m_cond.await();
+			}
+			
+			return m_lastState;
+		}
+		finally {
+			m_lock.unlock();
+		}
 	}
 	
 	class AsyncOpImpl extends AbstractAsyncOperation<Void> {

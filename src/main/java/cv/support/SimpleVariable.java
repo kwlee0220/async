@@ -110,7 +110,7 @@ public class SimpleVariable<T> implements Variable<T> {
 						
 						// 생성된 aop의 수행이 성공적으로 완료되면 본 변수의 'notifyValueUpdate()' 함수를
 						// 호출하도록 설정한다.
-						aop.addAsyncOperationListener(new AopListener(value));
+						aop.addStateChangeListener(new AopListener(value));
 						aop.start();
 					}
 				}

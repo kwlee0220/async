@@ -64,7 +64,8 @@ public interface Service {
 	}
 	
 	public default boolean isFinished() {
-		return getState() == ServiceState.STOPPED || getState() == ServiceState.FAILED;
+		ServiceState state = getState();
+		return state == ServiceState.STOPPED || state == ServiceState.FAILED;
 	}
 	
 	/**
