@@ -63,7 +63,7 @@ public abstract class ThreadedAsyncOperation<T> extends AbstractAsyncOperation<T
 
 	@Override
 	protected final void startOperation() throws Throwable {
-		Utilities.executeAsynchronously(getExecutor(), new ThreadedTask());
+		Utilities.runAsync(new ThreadedTask(), getExecutor());
 	}
 	
 	protected final Thread getWorkerThread() {
