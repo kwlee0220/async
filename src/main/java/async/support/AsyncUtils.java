@@ -1,10 +1,8 @@
 package async.support;
 
 import java.util.Arrays;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,30 +31,6 @@ public class AsyncUtils {
 	
 	public static <T> AsyncCompletableFuture<T> wrap(CompletableFuture<T> future) {
 		return AsyncCompletableFuture.get(future);
-	}
-	
-	public static AsyncRunnable runAsync(Runnable task, Runnable canceler) {
-		return new AsyncRunnable(task, canceler);
-	}
-	
-	public static AsyncRunnable runAsync(Runnable task) {
-		return new AsyncRunnable(task, null);
-	}
-	
-	public static <T> AsyncSupplier<T> runAsync(Supplier<T> task, Runnable canceler) {
-		return new AsyncSupplier<T>(task, canceler);
-	}
-	
-	public static <T> AsyncSupplier<T> runAsync(Supplier<T> task) {
-		return new AsyncSupplier<T>(task, null);
-	}
-	
-	public static <T> AsyncCallable<T> from(Callable<T> task, Runnable canceler) {
-		return new AsyncCallable<T>(task, canceler);
-	}
-	
-	public static <T> AsyncCallable<T> from(Callable<T> task) {
-		return new AsyncCallable<T>(task, null);
 	}
 
 	public static <T> boolean stopQuietly(AsyncOperation<T> aop) {
