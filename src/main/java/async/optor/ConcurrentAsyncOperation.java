@@ -3,7 +3,8 @@ package async.optor;
 import java.util.Collection;
 import java.util.concurrent.Executor;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import async.AsyncOperation;
 import async.AsyncOperationListener;
@@ -24,7 +25,7 @@ import utils.thread.ExecutorAware;
  */
 public class ConcurrentAsyncOperation extends AbstractAsyncOperation
 												implements AsyncOperation {
-	private static final Logger s_logger = Logger.getLogger("AOP.CONCUR");
+	private static final Logger s_logger = LoggerFactory.getLogger("AOP.CONCUR");
 	
 	private final AsyncOperation<?>[] m_elements;
 	private final int m_noOfElmFinishToCompletion;

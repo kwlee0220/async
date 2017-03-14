@@ -2,7 +2,8 @@ package async.optor;
 
 import java.util.concurrent.Executor;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import async.AsyncOperation;
 import async.support.AbstractAsyncOperation;
@@ -14,8 +15,8 @@ import async.support.AbstractAsyncOperation;
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public class NopAsyncOperation extends AbstractAsyncOperation implements AsyncOperation {
-	static final Logger s_logger = Logger.getLogger("AOP.NOP");
+public class NopAsyncOperation extends AbstractAsyncOperation<Void> implements AsyncOperation<Void> {
+	static final Logger s_logger = LoggerFactory.getLogger("AOP.NOP");
 	
 	public NopAsyncOperation(Executor executor) {
 		super(executor);

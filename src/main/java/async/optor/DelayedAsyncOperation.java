@@ -3,7 +3,8 @@ package async.optor;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Condition;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
@@ -28,7 +29,7 @@ import utils.thread.CamusExecutor;
  */
 public class DelayedAsyncOperation<T> extends AbstractAsyncOperation<T>
 										implements AsyncOperation<T> {
-	static final Logger s_logger = Logger.getLogger("AOP.DELAYED");
+	static final Logger s_logger = LoggerFactory.getLogger("AOP.DELAYED");
 
 	private final AsyncOperation<T> m_aop;
 	private final long m_delay;

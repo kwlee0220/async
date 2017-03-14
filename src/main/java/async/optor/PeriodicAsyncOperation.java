@@ -3,7 +3,8 @@ package async.optor;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import async.AsyncOperation;
 import async.AsyncOperationListener;
@@ -28,7 +29,7 @@ import utils.thread.CamusExecutor;
  */
 public class PeriodicAsyncOperation<T> extends AbstractAsyncOperation<T>
 										implements AsyncOperation<T> {
-	static final Logger s_logger = Logger.getLogger("AOP.PERIODIC");
+	static final Logger s_logger = LoggerFactory.getLogger("AOP.PERIODIC");
 
 	public static final int FOREVER = -1;
 

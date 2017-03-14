@@ -5,7 +5,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import async.AsyncOperation;
 import async.AsyncOperationListener;
@@ -52,7 +53,7 @@ import utils.thread.ExecutorAware;
  * @author Kang-Woo Lee (ETRI)
  */
 public class TimedAsyncOperation<T> extends AbstractAsyncOperation<T> implements AsyncOperation<T> {
-	static final Logger s_logger = Logger.getLogger("AOP.TIMED");
+	static final Logger s_logger = LoggerFactory.getLogger("AOP.TIMED");
 
 	private static final int STATE_RUNNING = 0;				// 비동기 연산이 수행중인 상태.
 	private static final int STATE_TIMEOUT_STOP_BEGIN = 1;	// 시간초과가 발생하여 이를 처리하기 중인 상태.

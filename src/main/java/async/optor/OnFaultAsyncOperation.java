@@ -2,7 +2,8 @@ package async.optor;
 
 import java.util.concurrent.Executor;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import async.AsyncOperation;
 import async.AsyncOperationListener;
@@ -16,7 +17,7 @@ import net.jcip.annotations.GuardedBy;
  * @author Kang-Woo Lee (ETRI)
  */
 public class OnFaultAsyncOperation<T> extends AbstractAsyncOperation<T> implements AsyncOperation<T> {
-	static final Logger s_logger = Logger.getLogger("AOP.ON_FAULT");
+	static final Logger s_logger = LoggerFactory.getLogger("AOP.ON_FAULT");
 	
 	private final AsyncOperation<T> m_aop;
 	private final FaultHandlerFactory<T> m_fact;

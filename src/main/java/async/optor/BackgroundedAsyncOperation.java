@@ -2,7 +2,8 @@ package async.optor;
 
 import java.util.concurrent.Executor;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import async.AsyncOperation;
 import async.AsyncOperationListener;
@@ -26,7 +27,7 @@ import utils.ExceptionUtils;
  * @author Kang-Woo Lee (ETRI)
  */
 public class BackgroundedAsyncOperation<T> extends AbstractAsyncOperation<T> implements AsyncOperation<T> {
-	private static final Logger s_logger = Logger.getLogger("AOP.BACKGROUND");
+	private static final Logger s_logger = LoggerFactory.getLogger("AOP.BACKGROUND");
 	
 	private final AsyncOperation<T> m_fgAop;
 	private final AsyncOperation<?> m_bgAop;
