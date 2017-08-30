@@ -9,6 +9,7 @@ import com.google.common.collect.Sets;
 
 import async.AsyncOperation;
 import async.OperationStoppedException;
+import async.support.AsyncUtils;
 import cv.ValueInfo;
 import cv.Variable;
 import cv.VariableListener;
@@ -16,7 +17,6 @@ import net.jcip.annotations.GuardedBy;
 import utils.ExceptionUtils;
 import utils.Initializable;
 import utils.LoggerSettable;
-import utils.Utilities;
 import utils.thread.ExecutorAware;
 
 
@@ -147,7 +147,7 @@ public abstract class AbstractVariable<T> implements Variable<T>, ExecutorAware,
 			m_cvCond.signalAll();
 
 			for ( final VariableListener listener: m_listeners ) {
-				Utilities.runAsync(() -> {
+				AsyncUtils.runAsync(() -> {
 					try {
 						listener.valueUpdated(value);
 					}

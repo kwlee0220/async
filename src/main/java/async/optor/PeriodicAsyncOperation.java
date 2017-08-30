@@ -10,8 +10,8 @@ import async.AsyncOperation;
 import async.AsyncOperationListener;
 import async.AsyncOperationState;
 import async.support.AbstractAsyncOperation;
+import async.support.AsyncUtils;
 import utils.ExceptionUtils;
-import utils.Utilities;
 import utils.thread.CamusExecutor;
 
 
@@ -142,7 +142,7 @@ public class PeriodicAsyncOperation<T> extends AbstractAsyncOperation<T>
 				m_aop.start();
 			}
 			catch ( final Throwable fault ) {
-				Utilities.runAsync(() -> {
+				AsyncUtils.runAsyncRTE(() -> {
 					final PeriodicAsyncOperation<T> _this = PeriodicAsyncOperation.this;
 
 					if ( getState() == AsyncOperationState.NOT_STARTED ) {

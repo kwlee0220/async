@@ -18,7 +18,7 @@ import com.google.common.eventbus.Subscribe;
 import async.Service;
 import async.ServiceStateChangeEvent;
 import async.support.AbstractService;
-import utils.Utilities;
+import async.support.AsyncUtils;
 
 
 /**
@@ -114,7 +114,7 @@ public class ConcurrentService extends AbstractService {
 				final Service comp = m_components[i];
 				comp.addStateChangeListener(new StartMonitor(i));
 				
-				Utilities.runCheckedAsync(()->comp.start(), getExecutor());
+				AsyncUtils.runAsyncRTE(()->comp.start(), getExecutor());
 			}
 			
 			// 모두 다 start() 메소드가 호출되었는지를 확인한다.
@@ -138,7 +138,7 @@ public class ConcurrentService extends AbstractService {
 				final Service comp = m_components[i];
 				comp.addStateChangeListener(new StopMonitor(i));
 				
-				Utilities.runCheckedAsync(() -> {
+				AsyncUtils.runAsyncRTE(() -> {
 					comp.stop();
 					
 					// comp가 이미 종료된 상태이면 StateChangeListener가 호출되지 않기 때문에

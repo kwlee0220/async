@@ -1,5 +1,6 @@
 package async.support;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -16,10 +17,9 @@ import async.Service;
 import async.ServiceState;
 import async.ServiceStateChangeEvent;
 import net.jcip.annotations.GuardedBy;
-import utils.Errors;
 import utils.ExceptionUtils;
 import utils.LoggerSettable;
-import utils.Utilities;
+import utils.Unchecked;
 import utils.thread.ExecutorAware;
 
 
@@ -112,7 +112,7 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 	protected abstract void stopService() throws Exception;
 	
 	protected ServiceState handleFailure(Throwable cause) {
-		Errors.runQuietly(()->stopService());
+		Unchecked.runIE(()->stopService());
 		return ServiceState.FAILED;
 	}
 	
@@ -556,6 +556,6 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 	
 	private final void notifyListenerAll(final ServiceState from, final ServiceState to) {
 		final ServiceStateChangeEvent changed = new ServiceStateChangeEvent(this, from, to);
-		Utilities.runAsync(()-> m_channel.post(changed), m_executor);
+		CompletableFuture.runAsync(()-> m_channel.post(changed), m_executor);
 	}
 }

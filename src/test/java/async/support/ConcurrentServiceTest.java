@@ -7,7 +7,6 @@ import org.junit.Test;
 
 import async.Service;
 import async.ServiceState;
-import utils.Utilities;
 
 /**
  * 
@@ -52,7 +51,7 @@ public class ConcurrentServiceTest {
 	
 	class ServiceImpl2 extends AbstractService {
 		@Override protected void startService() throws Exception {
-			Utilities.runCheckedAsync(()->{
+			AsyncUtils.runAsyncIE(()->{
 				Thread.sleep(100);
 				notifyServiceFailed(new IllegalArgumentException("error"));
 			});

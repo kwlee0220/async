@@ -1,5 +1,6 @@
 package async.support;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -11,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import async.OperationSchedulerProvider;
 import async.OperationStoppedException;
 import net.jcip.annotations.GuardedBy;
-import utils.Utilities;
 
 /**
  * <code>ThreadedAsyncOperation</code>는 비동기 연산 구현을 지원하는 추상 클래스이다.
@@ -82,7 +82,7 @@ public abstract class ThreadedAsyncOperation<T> extends AbstractAsyncOperation<T
 
 	@Override
 	protected final void startOperation() throws Throwable {
-		Utilities.runAsync(new ThreadedTask(), getExecutor());
+		CompletableFuture.runAsync(new ThreadedTask(), getExecutor());
 	}
 
 	@Override

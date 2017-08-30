@@ -8,7 +8,6 @@ import org.junit.Test;
 import async.Service;
 import async.ServiceState;
 import async.optor.CompositeService;
-import utils.Utilities;
 
 /**
  * 
@@ -90,7 +89,7 @@ public class CompositeServiceTest {
 	
 	class RuntimeFailService extends AbstractService {
 		@Override protected void startService() throws Exception {
-			Utilities.runCheckedAsync(()->{
+			AsyncUtils.runAsyncIE(()->{
 				Thread.sleep(100);
 				notifyServiceFailed(new IllegalArgumentException("error"));
 			});

@@ -1,5 +1,6 @@
 package async.support;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -16,9 +17,8 @@ import async.AsyncOperationState;
 import async.AsyncOperationStateChangeEvent;
 import edu.emory.mathcs.backport.java.util.concurrent.atomic.AtomicInteger;
 import net.jcip.annotations.GuardedBy;
-import utils.Errors;
 import utils.Lambdas;
-import utils.Utilities;
+import utils.Unchecked;
 
 /**
  * 
@@ -100,7 +100,7 @@ public class AbstractAsyncOperationTest {
 			@Override
 			protected void startOperation() throws Throwable {
 				notifyOperationStarted();
-				Utilities.runCheckedAsync(()-> {
+				AsyncUtils.runAsyncIE(()-> {
 					Thread.sleep(100);
 					notifyOperationCompleted(null);
 				});
@@ -224,7 +224,7 @@ public class AbstractAsyncOperationTest {
 		protected void startOperation() throws Throwable {
 			m_providerState.set(BEFORE_NOTI_START);
 			
-			Utilities.runAsync(Errors.toRunnableIE(()-> {
+			CompletableFuture.runAsync(Unchecked.liftIE(()-> {
 				Thread.sleep(200);
 				AsyncOperationState state = notifyOperationStarted();
 				m_providerState.set(AFTER_NOTI_START);
@@ -253,7 +253,7 @@ public class AbstractAsyncOperationTest {
 	static class AsyncOpImpl3 extends AbstractAsyncOperation<Void> {
 		@Override
 		protected void startOperation() throws Throwable {
-			Utilities.runAsync(Errors.toRunnableIE(()-> {
+			CompletableFuture.runAsync(Unchecked.liftIE(()-> {
 				Thread.sleep(100);
 				notifyOperationFailed(new AssertionError());
 			}));
@@ -264,7 +264,7 @@ public class AbstractAsyncOperationTest {
 	static class AsyncOpImpl4 extends AbstractAsyncOperation<Void> {
 		@Override
 		protected void startOperation() throws Throwable {
-			Utilities.runAsync(Errors.toRunnableIE(()-> {
+			CompletableFuture.runAsync(Unchecked.liftIE(()-> {
 				notifyOperationStarted();
 				Thread.sleep(200);
 				notifyOperationFailed(new AssertionError());

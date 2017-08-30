@@ -797,7 +797,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	
 	private void postStateChangeEvent(final AsyncOperationState state) {
 		AsyncOperationStateChangeEvent<T> changed = new AsyncOperationStateChangeEvent<>(this, state);
-		Utilities.runAsync(() -> m_changeNotifier.post(changed), m_executor);
+		AsyncUtils.runAsyncRTE(() -> m_changeNotifier.post(changed), m_executor);
 	}
 	
 	private boolean isReallyFinished() {

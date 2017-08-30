@@ -14,7 +14,7 @@ import async.Service;
 import async.ServiceState;
 import async.ServiceStateChangeEvent;
 import async.support.AbstractService;
-import utils.Errors;
+import utils.Unchecked;
 
 
 /**
@@ -50,7 +50,7 @@ public class CompositeService extends AbstractService {
 	protected void startService() throws Exception {
 		List<Service> faileds = Lists.newCopyOnWriteArrayList();
 		m_components.parallelStream()
-					.forEach(comp -> Errors.toRunnable(()->comp.start(), error->faileds.add(comp)).run());
+					.forEach(comp -> Unchecked.toRunnable(()->comp.start(), error->faileds.add(comp)).run());
 		if ( !faileds.isEmpty() ) {
 			m_components.parallelStream().forEach(Service::stop);
 			

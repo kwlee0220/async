@@ -16,7 +16,8 @@ import async.ServiceState;
 import async.ServiceStateChangeEvent;
 import async.ServiceStateChangeListener;
 import async.optor.ConcurrentService;
-import utils.Errors;
+import io.vavr.CheckedRunnable;
+import utils.Unchecked;
 import utils.Utilities;
 
 
@@ -27,6 +28,33 @@ import utils.Utilities;
 public class AsyncUtils {
 	private AsyncUtils() {
 		throw new AssertionError("should not be called: class=" + getClass());
+	}
+	
+	public static CompletableFuture<Void> runAsync(Runnable task, Executor executor) {
+		return CompletableFuture.runAsync(task, executor);
+	}
+	public static CompletableFuture<Void> runAsync(Runnable task) {
+		return CompletableFuture.runAsync(task);
+	}
+	
+	public static CompletableFuture<Void> runAsyncIE(CheckedRunnable task, Executor executor) {
+		return CompletableFuture.runAsync(Unchecked.liftIE(task), executor);
+	}
+	public static CompletableFuture<Void> runAsyncIE(CheckedRunnable task) {
+		return CompletableFuture.runAsync(Unchecked.liftIE(task));
+	}
+//	public static CompletableFuture<Void> runAsyncIE(Runnable task, Executor executor) {
+//		return CompletableFuture.runAsync(Unchecked.liftIE(task), executor);
+//	}
+//	public static CompletableFuture<Void> runAsyncIE(Runnable task) {
+//		return CompletableFuture.runAsync(Unchecked.liftIE(task));
+//	}
+	
+	public static CompletableFuture<Void> runAsyncRTE(CheckedRunnable task, Executor executor) {
+		return CompletableFuture.runAsync(Unchecked.liftRTE(task), executor);
+	}
+	public static CompletableFuture<Void> runAsyncRTE(CheckedRunnable task) {
+		return CompletableFuture.runAsync(Unchecked.liftRTE(task));
 	}
 	
 	public static <T> AsyncCompletableFuture<T> wrap(CompletableFuture<T> future) {
@@ -56,11 +84,11 @@ public class AsyncUtils {
 	}
 	
 	public static boolean startQuietly(Service service) {
-		return Errors.runQuietly(()->service.start());
+		return Unchecked.runIE(()->service.start());
 	}
 	
 	public static boolean stopQuietly(Service service) {
-		return Errors.runQuietly(()->service.stop());
+		return Unchecked.runIE(()->service.stop());
 	}
 
 	public static void stopQuietly(Service... tasks) {
@@ -131,7 +159,7 @@ public class AsyncUtils {
 			
 			switch ( event.getToState() ) {
 				case RUNNING:
-					Utilities.runAsync(() -> {
+					CompletableFuture.runAsync(() -> {
 						try {
 							m_dependent.start();
 						}
@@ -143,15 +171,15 @@ public class AsyncUtils {
 					});
 					break;
 				case STOPPED:
-					Utilities.runAsync(() -> m_dependent.stop());
+					CompletableFuture.runAsync(() -> m_dependent.stop());
 					break;
 				case FAILED:
 					if ( m_dependent instanceof AbstractService ) {
 						AbstractService asvc = (AbstractService)m_dependent;
-						Utilities.runAsync(() -> asvc.notifyServiceFailed(target.getFailureCause()));
+						CompletableFuture.runAsync(() -> asvc.notifyServiceFailed(target.getFailureCause()));
 					}
 					else {
-						Utilities.runAsync(() -> m_dependent.stop());
+						CompletableFuture.runAsync(() -> m_dependent.stop());
 					}
 					break;
 			}
