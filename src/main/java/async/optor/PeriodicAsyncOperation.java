@@ -11,7 +11,7 @@ import async.AsyncOperationListener;
 import async.AsyncOperationState;
 import async.support.AbstractAsyncOperation;
 import async.support.AsyncUtils;
-import utils.ExceptionUtils;
+import utils.Throwables;
 import utils.thread.CamusExecutor;
 
 
@@ -194,7 +194,7 @@ public class PeriodicAsyncOperation<T> extends AbstractAsyncOperation<T>
 								}
 								catch ( Throwable ignored ) {
 									s_logger.warn("fails to get PeriodicAsyncOperation result, cause="
-													+ ExceptionUtils.unwrapThrowable(ignored));
+													+ Throwables.unwrapThrowable(ignored));
 								}
 								_this.notifyOperationCompleted(result);
 							}
@@ -216,7 +216,7 @@ public class PeriodicAsyncOperation<T> extends AbstractAsyncOperation<T>
 					}
 					catch ( Throwable ignored ) {
 						s_logger.warn("fails to get PeriodicAsyncOperation fault cause, cause="
-										+ ExceptionUtils.unwrapThrowable(ignored));
+										+ Throwables.unwrapThrowable(ignored));
 					}
 					_this.notifyOperationFailed(cause);
 					break;

@@ -17,7 +17,7 @@ import async.Service;
 import async.ServiceState;
 import async.ServiceStateChangeEvent;
 import net.jcip.annotations.GuardedBy;
-import utils.ExceptionUtils;
+import utils.Throwables;
 import utils.LoggerSettable;
 import utils.Unchecked;
 import utils.thread.ExecutorAware;
@@ -200,7 +200,7 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 		catch ( Exception e ) {
 			m_lock.lock();
 			try {
-				m_failureCause = ExceptionUtils.unwrapThrowable(e);
+				m_failureCause = Throwables.unwrapThrowable(e);
 				m_state = STATE_FAILED;
 				m_cond.signalAll();
 				
@@ -285,7 +285,7 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 		catch ( Throwable e ) {
 			m_lock.lock();
 			try {
-				m_failureCause = ExceptionUtils.unwrapThrowable(e);
+				m_failureCause = Throwables.unwrapThrowable(e);
 				m_state = STATE_FAILED;
 				m_cond.signalAll();
 				
@@ -360,7 +360,7 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 		}
 		
 		ServiceState recoveredState = ServiceState.STOPPED;
-		cause = ExceptionUtils.unwrapThrowable(cause);
+		cause = Throwables.unwrapThrowable(cause);
 		try {
 			recoveredState = handleFailure(cause);
 		}

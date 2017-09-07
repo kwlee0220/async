@@ -13,7 +13,7 @@ import async.AsyncOperationListener;
 import async.AsyncOperationState;
 import async.support.AbstractAsyncOperation;
 import net.jcip.annotations.GuardedBy;
-import utils.ExceptionUtils;
+import utils.Throwables;
 import utils.thread.CamusExecutor;
 import utils.thread.ExecutorAware;
 
@@ -241,7 +241,7 @@ public class TimedAsyncOperation<T> extends AbstractAsyncOperation<T> implements
 					}
 					catch ( Throwable ignored ) {
 						s_logger.warn("fails to get " + getClass().getSimpleName() + " fault cause, cause="
-										+ ExceptionUtils.unwrapThrowable(ignored));
+										+ Throwables.unwrapThrowable(ignored));
 					}
 					_this.notifyOperationFailed(cause);
 					
@@ -265,7 +265,7 @@ public class TimedAsyncOperation<T> extends AbstractAsyncOperation<T> implements
 									m_timeoutAop = m_timeoutAopSupplier.get();
 								}
 								catch ( Exception e ) {
-									Throwable fault = ExceptionUtils.unwrapThrowable(e);
+									Throwable fault = Throwables.unwrapThrowable(e);
 									s_logger.warn("failed: creation of timeout execution: cause=" + fault);
 									
 									_this.notifyOperationFailed(fault);

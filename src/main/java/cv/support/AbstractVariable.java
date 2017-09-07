@@ -14,7 +14,7 @@ import cv.ValueInfo;
 import cv.Variable;
 import cv.VariableListener;
 import net.jcip.annotations.GuardedBy;
-import utils.ExceptionUtils;
+import utils.Throwables;
 import utils.Initializable;
 import utils.LoggerSettable;
 import utils.thread.ExecutorAware;
@@ -155,7 +155,7 @@ public abstract class AbstractVariable<T> implements Variable<T>, ExecutorAware,
 						removeUpdateListener(listener);
 						
 						getLogger().warn("remove the error-raising VariableListener: error="
-										+ ExceptionUtils.unwrapThrowable(ignored));
+										+ Throwables.unwrapThrowable(ignored));
 					}
 				}, getExecutor());
 			}

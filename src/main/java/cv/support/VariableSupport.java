@@ -14,7 +14,7 @@ import async.OperationStoppedException;
 import cv.ValueInfo;
 import cv.VariableListener;
 import net.jcip.annotations.GuardedBy;
-import utils.ExceptionUtils;
+import utils.Throwables;
 import utils.Utilities;
 import utils.thread.ExecutorAware;
 
@@ -60,7 +60,7 @@ public final class VariableSupport<T> implements ExecutorAware {
 						}
 						catch ( Throwable ignored ) {
 							s_logger.warn("fails to notify Variable update: cause="
-											+ ExceptionUtils.unwrapThrowable(ignored));
+											+ Throwables.unwrapThrowable(ignored));
 						}
 					}
 				});

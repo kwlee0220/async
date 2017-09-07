@@ -9,7 +9,7 @@ import async.AsyncOperation;
 import async.AsyncOperationListener;
 import async.AsyncOperationState;
 import async.support.AbstractAsyncOperation;
-import utils.ExceptionUtils;
+import utils.Throwables;
 
 
 
@@ -105,7 +105,7 @@ public class BackgroundedAsyncOperation<T> extends AbstractAsyncOperation<T> imp
 					}
 					catch ( Throwable ignored ) {
 						s_logger.warn("fails to get BackgroundedAsyncOperation result, cause="
-										+ ExceptionUtils.unwrapThrowable(ignored));
+										+ Throwables.unwrapThrowable(ignored));
 					}
 					_this.notifyOperationCompleted(result);
 					break;
@@ -116,7 +116,7 @@ public class BackgroundedAsyncOperation<T> extends AbstractAsyncOperation<T> imp
 					}
 					catch ( Throwable ignored ) {
 						s_logger.warn("fails to get BackgroundedAsyncOperation fault cause, cause="
-										+ ExceptionUtils.unwrapThrowable(ignored));
+										+ Throwables.unwrapThrowable(ignored));
 					}
 					_this.notifyOperationFailed(cause);
 					break;

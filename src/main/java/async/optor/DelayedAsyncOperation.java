@@ -15,7 +15,7 @@ import async.AsyncOperationState;
 import async.AsyncOperationStateChangeEvent;
 import async.support.AbstractAsyncOperation;
 import net.jcip.annotations.GuardedBy;
-import utils.ExceptionUtils;
+import utils.Throwables;
 import utils.thread.CamusExecutor;
 
 
@@ -182,7 +182,7 @@ public class DelayedAsyncOperation<T> extends AbstractAsyncOperation<T>
 				}
 				catch ( Throwable ignored ) {
 					s_logger.warn("fails to get DelayedAsyncOperation result, cause={}",
-									ExceptionUtils.unwrapThrowable(ignored));
+									Throwables.unwrapThrowable(ignored));
 				}
 				notifyOperationCompleted(result);
 				break;
@@ -196,7 +196,7 @@ public class DelayedAsyncOperation<T> extends AbstractAsyncOperation<T>
 				}
 				catch ( Throwable ignored ) {
 					s_logger.warn("fails to get DelayedAsyncOperation fault cause, cause={}", 
-									ExceptionUtils.unwrapThrowable(ignored));
+									Throwables.unwrapThrowable(ignored));
 				}
 				notifyOperationFailed(cause);
 				break;
@@ -220,7 +220,7 @@ public class DelayedAsyncOperation<T> extends AbstractAsyncOperation<T>
 					}
 					catch ( Throwable ignored ) {
 						s_logger.warn("fails to get DelayedAsyncOperation result, cause="
-										+ ExceptionUtils.unwrapThrowable(ignored));
+										+ Throwables.unwrapThrowable(ignored));
 					}
 					_this.notifyOperationCompleted(result);
 					break;
@@ -234,7 +234,7 @@ public class DelayedAsyncOperation<T> extends AbstractAsyncOperation<T>
 					}
 					catch ( Throwable ignored ) {
 						s_logger.warn("fails to get DelayedAsyncOperation fault cause, cause="
-										+ ExceptionUtils.unwrapThrowable(ignored));
+										+ Throwables.unwrapThrowable(ignored));
 					}
 					_this.notifyOperationFailed(cause);
 					break;

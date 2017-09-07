@@ -10,7 +10,7 @@ import async.AsyncOperationListener;
 import async.AsyncOperationState;
 import async.support.AbstractAsyncOperation;
 import net.jcip.annotations.GuardedBy;
-import utils.ExceptionUtils;
+import utils.Throwables;
 
 
 
@@ -155,7 +155,7 @@ public class SequentialAsyncOperation extends AbstractAsyncOperation implements 
 							}
 							catch ( Throwable ignored ) {
 								s_logger.warn("fails to get SequentialAsyncOperation result, cause="
-												+ ExceptionUtils.unwrapThrowable(ignored));
+												+ Throwables.unwrapThrowable(ignored));
 							}
 							
 							_this.notifyOperationCompleted(result);
@@ -172,7 +172,7 @@ public class SequentialAsyncOperation extends AbstractAsyncOperation implements 
 					}
 					catch ( Throwable ignored ) {
 						s_logger.warn("fails to get SequentialAsyncOperation fault cause, cause="
-										+ ExceptionUtils.unwrapThrowable(ignored));
+										+ Throwables.unwrapThrowable(ignored));
 					}
 					_this.notifyOperationFailed(cause);
 					break;

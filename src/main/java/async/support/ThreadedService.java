@@ -5,7 +5,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import io.vavr.CheckedRunnable;
 import net.jcip.annotations.GuardedBy;
-import utils.ExceptionUtils;
+import utils.Throwables;
 
 
 /**
@@ -250,7 +250,7 @@ public class ThreadedService extends AbstractService {
 						// 서비스 초기화 과정 중에서 예외가 발생하여 상태가 STATE_THRD_RUNNING으로
 						// 전이되기 이전인 경우에는 서비스 시작 과정 중에 오류가 발생한 것으로 간주한다.
 						//
-						m_cause = (Exception)ExceptionUtils.unwrapThrowable(e);
+						m_cause = (Exception)Throwables.unwrapThrowable(e);
 						m_threadState = STATE_THRD_FAILED;
 						m_threadStateChanged.signalAll();
 						

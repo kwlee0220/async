@@ -19,7 +19,7 @@ import async.OperationSchedulerException;
 import async.OperationSchedulerProvider;
 import async.SchedulableAsyncOperation;
 import net.jcip.annotations.GuardedBy;
-import utils.ExceptionUtils;
+import utils.Throwables;
 import utils.Utilities;
 import utils.thread.ExecutorAware;
 
@@ -271,7 +271,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 				catch ( Throwable fault ) {
 					setStateInGuard(FAILED);
 
-					final Throwable cause = ExceptionUtils.unwrapThrowable(fault);
+					final Throwable cause = Throwables.unwrapThrowable(fault);
 					throw new RuntimeException(cause.getMessage());
 				}
 				finally {
@@ -322,7 +322,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 			startOperation();
 		}
 		catch ( Throwable fault ) {
-			final Throwable cause = ExceptionUtils.unwrapThrowable(fault);
+			final Throwable cause = Throwables.unwrapThrowable(fault);
 			getLogger().warn("fails to start AOP: class=" + getClass().getName(), cause);
 			
 			Utilities.executeAsynchronously(m_executor, new Runnable() {
