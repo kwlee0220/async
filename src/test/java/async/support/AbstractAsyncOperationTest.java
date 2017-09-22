@@ -1,6 +1,7 @@
 package async.support;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -15,7 +16,6 @@ import com.google.common.eventbus.Subscribe;
 import async.AsyncOperation;
 import async.AsyncOperationState;
 import async.AsyncOperationStateChangeEvent;
-import edu.emory.mathcs.backport.java.util.concurrent.atomic.AtomicInteger;
 import net.jcip.annotations.GuardedBy;
 import utils.Lambdas;
 import utils.Unchecked;
