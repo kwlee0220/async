@@ -39,7 +39,7 @@ public class AbstractAsyncOperationTest {
 	
 	@Subscribe @AllowConcurrentEvents
 	public void receive(AsyncOperationStateChangeEvent<Void> event) {
-		Lambdas.guraded(m_lock, () -> {
+		Lambdas.guradedRun(m_lock, () -> {
 			m_lastState = event.getToState();
 			m_cond.signalAll();
 		});
