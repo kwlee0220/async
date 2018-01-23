@@ -54,7 +54,7 @@ import net.jcip.annotations.GuardedBy;
 public abstract class ThreadedAsyncOperation<T> extends AbstractAsyncOperation<T> {
 	private static final Logger s_logger = LoggerFactory.getLogger("ASYNC.RUNNABLE");
 	
-	private  static enum ThreadState {
+	private static enum ThreadState {
 		NOT_STARTED, RUNNING, COMPLETED, CANCELLING, CANCELLED, FAILED
 	};
 
