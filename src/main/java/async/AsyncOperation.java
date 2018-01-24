@@ -169,7 +169,8 @@ public interface AsyncOperation<T> {
 	 * @throws InterruptedException	대기 중 호출 쓰레드가 interrupt된 경우.
 	 * @throws IllegalArgumentException	대기 기간이 잘못된 경우.
 	 */
-	public boolean waitForStarted(long timeout) throws InterruptedException, IllegalArgumentException;
+	public boolean waitForStarted(long timeout) throws InterruptedException,
+														IllegalArgumentException;
 
 	/**
 	 * 본 비동기 연산이 종료(완료, 취소, 또는 오류)될 때까지 대기한다.
@@ -192,7 +193,8 @@ public interface AsyncOperation<T> {
 	 * @throws InterruptedException	대기 중 호출 쓰레드가 interrupt된 경우.
 	 * @throws IllegalArgumentException 대기 기간이 잘못된 경우.
 	 */
-	public boolean waitForFinished(long timeout) throws InterruptedException, IllegalArgumentException;
+	public boolean waitForFinished(long timeout) throws InterruptedException,
+														IllegalArgumentException;
 	
 	/**
 	 * 주어진 상태 변화 이벤트 리스너를 본 비동기 연산에 등록시킨다.
