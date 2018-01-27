@@ -16,10 +16,10 @@ import com.google.common.eventbus.AsyncEventBus;
 import async.Service;
 import async.ServiceState;
 import async.ServiceStateChangeEvent;
+import io.vavr.control.Try;
 import net.jcip.annotations.GuardedBy;
-import utils.Throwables;
 import utils.LoggerSettable;
-import utils.Unchecked;
+import utils.Throwables;
 import utils.thread.ExecutorAware;
 
 
@@ -112,7 +112,7 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 	protected abstract void stopService() throws Exception;
 	
 	protected ServiceState handleFailure(Throwable cause) {
-		Unchecked.runIE(()->stopService());
+		Try.run(this::stopService);
 		return ServiceState.FAILED;
 	}
 	

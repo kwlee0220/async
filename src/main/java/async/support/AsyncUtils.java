@@ -17,6 +17,7 @@ import async.ServiceStateChangeEvent;
 import async.ServiceStateChangeListener;
 import async.optor.ConcurrentService;
 import io.vavr.CheckedRunnable;
+import io.vavr.control.Try;
 import utils.Unchecked;
 import utils.Utilities;
 
@@ -37,18 +38,12 @@ public class AsyncUtils {
 		return CompletableFuture.runAsync(task);
 	}
 	
-	public static CompletableFuture<Void> runAsyncIE(CheckedRunnable task, Executor executor) {
-		return CompletableFuture.runAsync(Unchecked.liftIE(task), executor);
+	public static CompletableFuture<Try<Void>> tryToRunAsync(CheckedRunnable task, Executor executor) {
+		return CompletableFuture.supplyAsync(()->Try.run(task), executor);
 	}
-	public static CompletableFuture<Void> runAsyncIE(CheckedRunnable task) {
-		return CompletableFuture.runAsync(Unchecked.liftIE(task));
+	public static CompletableFuture<Try<Void>> tryToRunAsync(CheckedRunnable task) {
+		return CompletableFuture.supplyAsync(()->Try.run(task));
 	}
-//	public static CompletableFuture<Void> runAsyncIE(Runnable task, Executor executor) {
-//		return CompletableFuture.runAsync(Unchecked.liftIE(task), executor);
-//	}
-//	public static CompletableFuture<Void> runAsyncIE(Runnable task) {
-//		return CompletableFuture.runAsync(Unchecked.liftIE(task));
-//	}
 	
 	public static CompletableFuture<Void> runAsyncRTE(CheckedRunnable task, Executor executor) {
 		return CompletableFuture.runAsync(Unchecked.liftRTE(task), executor);
@@ -83,12 +78,12 @@ public class AsyncUtils {
 		return false;
 	}
 	
-	public static boolean startQuietly(Service service) {
-		return Unchecked.runIE(()->service.start());
+	public static Try<Void> startQuietly(Service service) {
+		return Try.run(service::start);
 	}
 	
-	public static boolean stopQuietly(Service service) {
-		return Unchecked.runIE(()->service.stop());
+	public static Try<Void> stopQuietly(Service service) {
+		return Try.run(service::stop);
 	}
 
 	public static void stopQuietly(Service... tasks) {

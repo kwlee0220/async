@@ -51,7 +51,7 @@ public class ConcurrentServiceTest {
 	
 	class ServiceImpl2 extends AbstractService {
 		@Override protected void startService() throws Exception {
-			AsyncUtils.runAsyncIE(()->{
+			AsyncUtils.tryToRunAsync(()->{
 				Thread.sleep(100);
 				notifyServiceFailed(new IllegalArgumentException("error"));
 			});

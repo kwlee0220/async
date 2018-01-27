@@ -100,7 +100,7 @@ public class AbstractAsyncOperationTest {
 			@Override
 			protected void startOperation() throws Throwable {
 				notifyOperationStarted();
-				AsyncUtils.runAsyncIE(()-> {
+				AsyncUtils.tryToRunAsync(()-> {
 					Thread.sleep(100);
 					notifyOperationCompleted(null);
 				});
