@@ -26,8 +26,8 @@ public class AsyncOperationStateChangeEvent<T> implements Event {
 	 * @param toState	이전된 상태 
 	 */
 	public AsyncOperationStateChangeEvent(AsyncOperation<T> aop, AsyncOperationState toState) {
-		Preconditions.checkNotNull(aop, "target AsyncOperation is null");
-		Preconditions.checkNotNull(toState, "to state is null");
+		Objects.requireNonNull(aop, "target AsyncOperation is null");
+		Objects.requireNonNull(toState, "to state is null");
 		
 		m_aop = aop;
 		m_toState = toState;
@@ -44,9 +44,9 @@ public class AsyncOperationStateChangeEvent<T> implements Event {
 	 */
 	public AsyncOperationStateChangeEvent(AsyncOperation<T> aop, AsyncOperationState toState,
 										String tag) {
-		Preconditions.checkNotNull(aop, "target AsyncOperation is null");
-		Preconditions.checkNotNull(toState, "to state is null");
-		Preconditions.checkNotNull(tag, "tag is null");
+		Objects.requireNonNull(aop, "target AsyncOperation is null");
+		Objects.requireNonNull(toState, "to state is null");
+		Objects.requireNonNull(tag, "tag is null");
 		
 		m_aop = aop;
 		m_toState = toState;

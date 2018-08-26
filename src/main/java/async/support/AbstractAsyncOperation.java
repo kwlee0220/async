@@ -1,5 +1,6 @@
 package async.support;
 
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -185,7 +186,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	 * @param executor	비동기 연산 수행 중 사용할 쓰레드 풀 객체.
 	 */
 	protected AbstractAsyncOperation(Executor executor) {
-		Preconditions.checkNotNull(executor, "executor was null");
+		Objects.requireNonNull(executor, "executor was null");
 		
 		m_state = NOT_STARTED;
 		m_result = null;
@@ -203,7 +204,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	 * @param scheduler	연동될 비동기 연산 스케쥴러
 	 */
 	protected AbstractAsyncOperation(OperationSchedulerProvider scheduler) {
-		Preconditions.checkNotNull(scheduler, "scheduler was null");
+		Objects.requireNonNull(scheduler, "scheduler was null");
 		
 		m_state = NOT_STARTED;
 		m_result = null;
@@ -215,7 +216,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 
 	@Override
 	public final void setExecutor(Executor executor) {
-		Preconditions.checkNotNull(executor, "executor was null");
+		Objects.requireNonNull(executor, "executor was null");
 		
 		m_executor = executor;
 		m_changeNotifier = new AsyncEventBus(executor);
@@ -225,7 +226,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	 * 비동기 연산을 관리할 비동기 연산 스케쥴러를 설정한다.
 	 */
 	public void setOperationScheduler(OperationSchedulerProvider scheduler) {
-		Preconditions.checkNotNull(scheduler, "scheduler was null");
+		Objects.requireNonNull(scheduler, "scheduler was null");
 		
 		m_scheduler = scheduler;
 	}

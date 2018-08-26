@@ -27,9 +27,9 @@ public class ServiceStateChangeEvent implements Event {
 	 * @param toState	이전된 상태 
 	 */
 	public ServiceStateChangeEvent(Service service, ServiceState fromState, ServiceState toState) {
-		Preconditions.checkNotNull(service, "target service is null");
-		Preconditions.checkNotNull(fromState, "from state is null");
-		Preconditions.checkNotNull(toState, "to state is null");
+		Objects.requireNonNull(service, "target service is null");
+		Objects.requireNonNull(fromState, "from state is null");
+		Objects.requireNonNull(toState, "to state is null");
 		
 		m_service = service;
 		m_fromState = fromState;
@@ -47,10 +47,10 @@ public class ServiceStateChangeEvent implements Event {
 	 */
 	public ServiceStateChangeEvent(Service service, ServiceState fromState, ServiceState toState,
 									String tag) {
-		Preconditions.checkNotNull(service, "target service is null");
-		Preconditions.checkNotNull(fromState, "from state is null");
-		Preconditions.checkNotNull(toState, "to state is null");
-		Preconditions.checkNotNull(tag, "tag is null");
+		Objects.requireNonNull(service, "target service is null");
+		Objects.requireNonNull(fromState, "from state is null");
+		Objects.requireNonNull(toState, "to state is null");
+		Objects.requireNonNull(tag, "tag is null");
 		
 		m_service = service;
 		m_fromState = fromState;

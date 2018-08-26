@@ -137,7 +137,7 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 	 */
 	@Override
 	public void setExecutor(Executor executor) {
-		Preconditions.checkNotNull(executor, "executor was null");
+		Objects.requireNonNull(executor, "executor was null");
 		
 		m_executor = executor;
 		m_channel = new AsyncEventBus(m_executor);

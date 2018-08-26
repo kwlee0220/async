@@ -1,5 +1,6 @@
 package async.optor;
 
+import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Condition;
 
@@ -170,7 +171,7 @@ public class DelayedAsyncOperation<T> extends AbstractAsyncOperation<T>
 	
 	@Subscribe
 	public void onDelayedAopStateChanged(AsyncOperationStateChangeEvent<T> event) {
-		Preconditions.checkNotNull(event);
+		Objects.requireNonNull(event, "event is null");
 		Preconditions.checkArgument(event.getAsyncOperation() == m_aop);
 
 		final AsyncOperationState toState = event.getToState();
