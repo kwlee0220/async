@@ -1,6 +1,6 @@
 package async;
 
-import com.google.common.base.Preconditions;
+import java.util.Objects;
 
 import event.Event;
 
