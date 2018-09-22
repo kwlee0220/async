@@ -17,7 +17,7 @@ import async.AsyncOperation;
 import async.AsyncOperationState;
 import async.AsyncOperationStateChangeEvent;
 import net.jcip.annotations.GuardedBy;
-import utils.Lambdas;
+import utils.Guards;
 import utils.Unchecked;
 
 /**
@@ -39,7 +39,7 @@ public class AbstractAsyncOperationTest {
 	
 	@Subscribe @AllowConcurrentEvents
 	public void receive(AsyncOperationStateChangeEvent<Void> event) {
-		Lambdas.guradedRun(m_lock, () -> {
+		Guards.run(m_lock, () -> {
 			m_lastState = event.getToState();
 			m_cond.signalAll();
 		});
