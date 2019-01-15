@@ -16,11 +16,11 @@ import net.jcip.annotations.GuardedBy;
  * @author Kang-Woo Lee
  */
 public class QueuedOperationScheduler extends AbstractOperationScheduler {
-	@GuardedBy("m_schdrMutex") private final List<SchedulableAsyncOperation> m_queue;
-	@GuardedBy("m_schdrMutex") private SchedulableAsyncOperation m_running;
+	@GuardedBy("m_schdrMutex") private final List<SchedulableAsyncOperation<?>> m_queue;
+	@GuardedBy("m_schdrMutex") private SchedulableAsyncOperation<?> m_running;
 	
 	public QueuedOperationScheduler() {
-		m_queue = new ArrayList<SchedulableAsyncOperation>();
+		m_queue = new ArrayList<SchedulableAsyncOperation<?>>();
 		m_running = null;
 	}
 	
@@ -30,7 +30,7 @@ public class QueuedOperationScheduler extends AbstractOperationScheduler {
 	}
 
 	@Override
-	public void submit(SchedulableAsyncOperation schedule) {
+	public void submit(SchedulableAsyncOperation<?> schedule) {
 		schedule.addStateChangeListener(m_listener);
 		notifySubmittedToListeners(schedule);
 		
@@ -49,12 +49,12 @@ public class QueuedOperationScheduler extends AbstractOperationScheduler {
 
 	@Override
 	public void stopAll() {
-		List<SchedulableAsyncOperation> killeds = new ArrayList<SchedulableAsyncOperation>();
+		List<SchedulableAsyncOperation<?>> killeds = new ArrayList<SchedulableAsyncOperation<?>>();
 		
 		synchronized ( m_schdrMutex ) {
 			int size = m_queue.size();
 			for ( int i =0; i < size; ++i ) {
-				SchedulableAsyncOperation schedule = m_queue.get(i);
+				SchedulableAsyncOperation<?> schedule = m_queue.get(i);
 				
 				schedule.cancel();
 				killeds.add(schedule);
@@ -68,7 +68,7 @@ public class QueuedOperationScheduler extends AbstractOperationScheduler {
 				m_running = null;
 			}
 			
-			for ( SchedulableAsyncOperation schedule: killeds ) {
+			for ( SchedulableAsyncOperation<?> schedule: killeds ) {
 				try {
 					schedule.waitForFinished();
 				}
@@ -82,7 +82,7 @@ public class QueuedOperationScheduler extends AbstractOperationScheduler {
 			
 	}
 	
-	private boolean startInGuard(SchedulableAsyncOperation schedule) {
+	private boolean startInGuard(SchedulableAsyncOperation<?> schedule) {
 		if ( schedule.permitToStart() ) {
 			m_running = schedule;
 			

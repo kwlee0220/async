@@ -16,10 +16,10 @@ import net.jcip.annotations.GuardedBy;
  * @author Kang-Woo Lee
  */
 public class NoWaitOperationScheduler extends AbstractOperationScheduler {
-	@GuardedBy("m_schdrMutex") private final Set<SchedulableAsyncOperation> m_runnings;
+	@GuardedBy("m_schdrMutex") private final Set<SchedulableAsyncOperation<?>> m_runnings;
 	
 	public NoWaitOperationScheduler() {
-		m_runnings = new HashSet<SchedulableAsyncOperation>();
+		m_runnings = new HashSet<SchedulableAsyncOperation<?>>();
 	}
 	
 	@Override
@@ -28,7 +28,7 @@ public class NoWaitOperationScheduler extends AbstractOperationScheduler {
 	}
 
 	@Override
-	public void submit(SchedulableAsyncOperation schedule) {
+	public void submit(SchedulableAsyncOperation<?> schedule) {
 		schedule.addStateChangeListener(m_listener);
 		notifySubmittedToListeners(schedule);
 		
@@ -42,12 +42,12 @@ public class NoWaitOperationScheduler extends AbstractOperationScheduler {
 	@Override
 	public void stopAll() {
 		synchronized ( m_schdrMutex ) {
-			for ( SchedulableAsyncOperation schedule: m_runnings ) {
+			for ( SchedulableAsyncOperation<?> schedule: m_runnings ) {
 				schedule.removeStateChangeListener(m_listener);
 				schedule.cancel();
 			}
 			
-			for ( SchedulableAsyncOperation schedule: m_runnings ) {
+			for ( SchedulableAsyncOperation<?> schedule: m_runnings ) {
 				try {
 					schedule.waitForFinished();
 				}

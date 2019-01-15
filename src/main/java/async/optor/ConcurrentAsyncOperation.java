@@ -23,8 +23,7 @@ import utils.thread.ExecutorAware;
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public class ConcurrentAsyncOperation extends AbstractAsyncOperation
-												implements AsyncOperation {
+public class ConcurrentAsyncOperation extends AbstractAsyncOperation<Void> {
 	private static final Logger s_logger = LoggerFactory.getLogger("AOP.CONCUR");
 	
 	private final AsyncOperation<?>[] m_elements;
