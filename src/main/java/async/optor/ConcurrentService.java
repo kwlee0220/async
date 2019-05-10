@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -20,6 +19,7 @@ import async.Service;
 import async.ServiceStateChangeEvent;
 import async.support.AbstractService;
 import async.support.AsyncUtils;
+import utils.Utilities;
 
 
 /**
@@ -47,7 +47,7 @@ public class ConcurrentService extends AbstractService {
 		}
 		
 		public Builder addInterface(Class<?> intfc) {
-			Objects.requireNonNull(intfc, "interface is null");
+			Utilities.checkNotNullArgument(intfc, "interface is null");
 			Preconditions.checkArgument(intfc.isInterface(), "not interface=" + intfc);
 			
 			m_intfcs.add(intfc);

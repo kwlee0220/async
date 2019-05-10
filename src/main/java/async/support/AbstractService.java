@@ -1,6 +1,5 @@
 package async.support;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -20,6 +19,7 @@ import io.vavr.control.Try;
 import net.jcip.annotations.GuardedBy;
 import utils.LoggerSettable;
 import utils.Throwables;
+import utils.Utilities;
 import utils.thread.ExecutorAware;
 
 
@@ -137,7 +137,7 @@ public abstract class AbstractService implements Service, ExecutorAware, LoggerS
 	 */
 	@Override
 	public void setExecutor(Executor executor) {
-		Objects.requireNonNull(executor, "executor was null");
+		Utilities.checkNotNullArgument(executor, "executor was null");
 		
 		m_executor = executor;
 		m_channel = new AsyncEventBus(m_executor);

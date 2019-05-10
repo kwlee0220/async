@@ -1,9 +1,8 @@
 package async;
 
 
-import java.util.Objects;
-
 import event.Event;
+import utils.Utilities;
 
 /**
  * 
@@ -26,8 +25,8 @@ public class AsyncOperationStateChangeEvent<T> implements Event {
 	 * @param toState	이전된 상태 
 	 */
 	public AsyncOperationStateChangeEvent(AsyncOperation<T> aop, AsyncOperationState toState) {
-		Objects.requireNonNull(aop, "target AsyncOperation is null");
-		Objects.requireNonNull(toState, "to state is null");
+		Utilities.checkNotNullArgument(aop, "target AsyncOperation is null");
+		Utilities.checkNotNullArgument(toState, "to state is null");
 		
 		m_aop = aop;
 		m_toState = toState;
@@ -44,9 +43,9 @@ public class AsyncOperationStateChangeEvent<T> implements Event {
 	 */
 	public AsyncOperationStateChangeEvent(AsyncOperation<T> aop, AsyncOperationState toState,
 										String tag) {
-		Objects.requireNonNull(aop, "target AsyncOperation is null");
-		Objects.requireNonNull(toState, "to state is null");
-		Objects.requireNonNull(tag, "tag is null");
+		Utilities.checkNotNullArgument(aop, "target AsyncOperation is null");
+		Utilities.checkNotNullArgument(toState, "to state is null");
+		Utilities.checkNotNullArgument(tag, "tag is null");
 		
 		m_aop = aop;
 		m_toState = toState;
