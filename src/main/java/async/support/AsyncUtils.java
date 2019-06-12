@@ -18,8 +18,8 @@ import async.ServiceStateChangeListener;
 import async.optor.ConcurrentService;
 import io.vavr.control.Try;
 import utils.Utilities;
-import utils.unchecked.CheckedRunnable;
-import utils.unchecked.Unchecked;
+import utils.exception.CheckedRunnable;
+import utils.exception.Unchecked;
 
 
 /**

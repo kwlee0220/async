@@ -1,6 +1,6 @@
 package async.optor;
 
-import static utils.unchecked.Unchecked.lift;
+import static utils.exception.Unchecked.lift;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,8 +16,8 @@ import async.Service;
 import async.ServiceState;
 import async.ServiceStateChangeEvent;
 import async.support.AbstractService;
-import utils.unchecked.ExceptionCase;
-import utils.unchecked.ExceptionHandler;
+import utils.exception.ExceptionCase;
+import utils.exception.ExceptionHandler;
 
 
 /**
