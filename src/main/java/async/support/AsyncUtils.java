@@ -16,10 +16,10 @@ import async.ServiceState;
 import async.ServiceStateChangeEvent;
 import async.ServiceStateChangeListener;
 import async.optor.ConcurrentService;
-import io.vavr.CheckedRunnable;
 import io.vavr.control.Try;
-import utils.Unchecked;
 import utils.Utilities;
+import utils.unchecked.CheckedRunnable;
+import utils.unchecked.Unchecked;
 
 
 /**
@@ -39,10 +39,10 @@ public class AsyncUtils {
 	}
 	
 	public static CompletableFuture<Try<Void>> tryToRunAsync(CheckedRunnable task, Executor executor) {
-		return CompletableFuture.supplyAsync(()->Try.run(task), executor);
+		return CompletableFuture.supplyAsync(Unchecked.lift(task), executor);
 	}
 	public static CompletableFuture<Try<Void>> tryToRunAsync(CheckedRunnable task) {
-		return CompletableFuture.supplyAsync(()->Try.run(task));
+		return CompletableFuture.supplyAsync(Unchecked.lift(task));
 	}
 	
 	public static CompletableFuture<Void> runAsyncRTE(CheckedRunnable task, Executor executor) {
