@@ -2,9 +2,6 @@ package async.support;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -17,8 +14,8 @@ import async.AsyncOperation;
 import async.AsyncOperationState;
 import async.AsyncOperationStateChangeEvent;
 import net.jcip.annotations.GuardedBy;
-import utils.Guards;
-import utils.exception.Unchecked;
+import utils.Guard;
+import utils.func.Unchecked;
 
 /**
  * 
@@ -33,16 +30,12 @@ public class AbstractAsyncOperationTest {
 	private final AtomicInteger m_providerState = new AtomicInteger();
 	private boolean m_cancelCalled;
 	
-	private final Lock m_lock = new ReentrantLock();
-	private final Condition m_cond = m_lock.newCondition();
+	private final Guard m_guard = Guard.create();
 	@GuardedBy("m_lock") private AsyncOperationState m_lastState = AsyncOperationState.NOT_STARTED;
 	
 	@Subscribe @AllowConcurrentEvents
 	public void receive(AsyncOperationStateChangeEvent<Void> event) {
-		Guards.run(m_lock, () -> {
-			m_lastState = event.getToState();
-			m_cond.signalAll();
-		});
+		m_guard.run(() -> m_lastState = event.getToState(), true);
 	}
 	
 	@Before
@@ -206,17 +199,7 @@ public class AbstractAsyncOperationTest {
 	
 	private AsyncOperationState waitWhile(final AsyncOperationState state)
 		throws InterruptedException {
-		m_lock.lock();
-		try {
-			while ( m_lastState == state ) {
-				m_cond.await();
-			}
-			
-			return m_lastState;
-		}
-		finally {
-			m_lock.unlock();
-		}
+		return m_guard.awaitWhileAndGet(() -> m_lastState == state, () -> m_lastState);
 	}
 	
 	class AsyncOpImpl extends AbstractAsyncOperation<Void> {

@@ -1,6 +1,6 @@
 package async.optor;
 
-import static utils.exception.Unchecked.lift;
+import static utils.func.Unchecked.lift;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,8 +16,8 @@ import async.Service;
 import async.ServiceState;
 import async.ServiceStateChangeEvent;
 import async.support.AbstractService;
-import utils.exception.ExceptionCase;
-import utils.exception.ExceptionHandler;
+import utils.func.FailureCase;
+import utils.func.Unchecked;
 
 
 /**
@@ -51,20 +51,14 @@ public class CompositeService extends AbstractService {
 
 	@Override
 	protected void startService() throws Exception {
-		List<Service> faileds = Lists.newCopyOnWriteArrayList();
+		List<FailureCase<Service>> faileds = Lists.newCopyOnWriteArrayList();
 		
 		m_components.parallelStream()
-					.forEach(lift(Service::start, new ExceptionHandler<Service,Void>() {
-						@Override
-						public Void handle(ExceptionCase<Service> ecase) throws RuntimeException {
-							faileds.add(ecase.getData());
-							return null;
-						}
-					}));
+					.forEach(lift(Service::start, Unchecked.collect(faileds)));
 		if ( !faileds.isEmpty() ) {
 			m_components.parallelStream().forEach(Service::stop);
 			
-			throw (Exception)faileds.get(0).getFailureCause();
+			throw (Exception)faileds.get(0).getData().getFailureCause();
 		}
 	}
 

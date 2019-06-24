@@ -18,8 +18,8 @@ import async.OperationSchedulerException;
 import async.OperationSchedulerProvider;
 import async.SchedulableAsyncOperation;
 import net.jcip.annotations.GuardedBy;
+import utils.Throwables;
 import utils.Utilities;
-import utils.exception.Throwables;
 import utils.thread.ExecutorAware;
 
 
@@ -796,7 +796,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 	
 	private void postStateChangeEvent(final AsyncOperationState state) {
 		AsyncOperationStateChangeEvent<T> changed = new AsyncOperationStateChangeEvent<>(this, state);
-		AsyncUtils.runAsyncRTE(() -> m_changeNotifier.post(changed), m_executor);
+		AsyncUtils.runAsyncSneakily(() -> m_changeNotifier.post(changed), m_executor);
 	}
 	
 	private boolean isReallyFinished() {

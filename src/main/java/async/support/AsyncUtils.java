@@ -16,10 +16,10 @@ import async.ServiceState;
 import async.ServiceStateChangeEvent;
 import async.ServiceStateChangeListener;
 import async.optor.ConcurrentService;
-import io.vavr.control.Try;
 import utils.Utilities;
-import utils.exception.CheckedRunnable;
-import utils.exception.Unchecked;
+import utils.func.CheckedRunnable;
+import utils.func.Try;
+import utils.func.Unchecked;
 
 
 /**
@@ -39,17 +39,17 @@ public class AsyncUtils {
 	}
 	
 	public static CompletableFuture<Try<Void>> tryToRunAsync(CheckedRunnable task, Executor executor) {
-		return CompletableFuture.supplyAsync(Unchecked.lift(task), executor);
+		return CompletableFuture.supplyAsync(Try.lift(task), executor);
 	}
 	public static CompletableFuture<Try<Void>> tryToRunAsync(CheckedRunnable task) {
-		return CompletableFuture.supplyAsync(Unchecked.lift(task));
+		return CompletableFuture.supplyAsync(Try.lift(task));
 	}
 	
-	public static CompletableFuture<Void> runAsyncRTE(CheckedRunnable task, Executor executor) {
-		return CompletableFuture.runAsync(Unchecked.liftRTE(task), executor);
+	public static CompletableFuture<Void> runAsyncSneakily(CheckedRunnable task, Executor executor) {
+		return CompletableFuture.runAsync(Unchecked.erase(task), executor);
 	}
-	public static CompletableFuture<Void> runAsyncRTE(CheckedRunnable task) {
-		return CompletableFuture.runAsync(Unchecked.liftRTE(task));
+	public static CompletableFuture<Void> runAsyncSneakily(CheckedRunnable task) {
+		return CompletableFuture.runAsync(Unchecked.erase(task));
 	}
 	
 	public static <T> AsyncCompletableFuture<T> wrap(CompletableFuture<T> future) {

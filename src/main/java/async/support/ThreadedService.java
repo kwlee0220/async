@@ -5,7 +5,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import io.vavr.CheckedRunnable;
 import net.jcip.annotations.GuardedBy;
-import utils.exception.Throwables;
+import utils.Throwables;
 
 
 /**

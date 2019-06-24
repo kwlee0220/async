@@ -15,11 +15,11 @@ import com.google.common.eventbus.AsyncEventBus;
 import async.Service;
 import async.ServiceState;
 import async.ServiceStateChangeEvent;
-import io.vavr.control.Try;
 import net.jcip.annotations.GuardedBy;
 import utils.LoggerSettable;
+import utils.Throwables;
 import utils.Utilities;
-import utils.exception.Throwables;
+import utils.func.Try;
 import utils.thread.ExecutorAware;
 
 

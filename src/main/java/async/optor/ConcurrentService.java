@@ -116,7 +116,7 @@ public class ConcurrentService extends AbstractService {
 				final Service comp = m_components[i];
 				comp.addStateChangeListener(new StartMonitor(i));
 				
-				AsyncUtils.runAsyncRTE(()->comp.start(), getExecutor());
+				AsyncUtils.runAsyncSneakily(()->comp.start(), getExecutor());
 			}
 			
 			// 모두 다 start() 메소드가 호출되었는지를 확인한다.
@@ -140,7 +140,7 @@ public class ConcurrentService extends AbstractService {
 				final Service comp = m_components[i];
 				comp.addStateChangeListener(new StopMonitor(i));
 				
-				AsyncUtils.runAsyncRTE(() -> {
+				AsyncUtils.runAsyncSneakily(() -> {
 					comp.stop();
 					
 					// comp가 이미 종료된 상태이면 StateChangeListener가 호출되지 않기 때문에
