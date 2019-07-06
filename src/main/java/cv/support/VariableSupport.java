@@ -53,7 +53,7 @@ public final class VariableSupport<T> implements ExecutorAware {
 			m_mutex.notifyAll();
 
 			for ( final VariableListener listener: m_listeners ) {
-				Utilities.executeAsynchronously(m_executor, new Runnable() {
+				Utilities.runAsync(m_executor, new Runnable() {
 					@Override public void run() {
 						try {
 							listener.valueUpdated(value);

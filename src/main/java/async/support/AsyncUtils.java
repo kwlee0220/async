@@ -91,7 +91,7 @@ public class AsyncUtils {
 	}
 
 	public static void stopAsynchronously(final Service svc, Executor executor) {
-		Utilities.executeAsynchronously(executor, new Runnable() {
+		Utilities.runAsync(executor, new Runnable() {
 			public void run() {
 				try {
 					svc.stop();

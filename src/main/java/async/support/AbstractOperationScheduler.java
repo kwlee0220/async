@@ -53,7 +53,7 @@ public abstract class AbstractOperationScheduler implements OperationSchedulerPr
 	
 	protected void notifySubmittedToListeners(final AsyncOperation<?> aop) {
 		for ( final OperationSchedulerListener listener: m_listeners ) {
-			Utilities.executeAsynchronously(m_executor, new Runnable() {
+			Utilities.runAsync(m_executor, new Runnable() {
 				@Override public void run() {
 					try {
 						listener.onAsyncOperationSubmitted(aop);

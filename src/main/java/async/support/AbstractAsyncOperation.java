@@ -324,7 +324,7 @@ public abstract class AbstractAsyncOperation<T> implements SchedulableAsyncOpera
 			final Throwable cause = Throwables.unwrapThrowable(fault);
 			getLogger().warn("fails to start AOP: class=" + getClass().getName(), cause);
 			
-			Utilities.executeAsynchronously(m_executor, new Runnable() {
+			Utilities.runAsync(m_executor, new Runnable() {
 				@Override public void run() {
 //					if ( _getState() == STARTING ) {
 //						AbstractAsyncOperation.this.notifyOperationStarted();
