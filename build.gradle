@@ -36,15 +36,33 @@ artifacts {
 
 apply plugin: 'eclipse'
 eclipse {
-    classpath {
-        defaultOutputDir = file('classes')
-        file.whenMerged {
-            entries.each {
-                source ->
-                    if ( source.kind == 'src' && source.hasProperty('output') ) {
-                        source.output = 'classes'
-                    }
-            }
-        }
-    }
+	classpath {
+		file {
+			withXml {
+				def node = it.asNode()
+				node.appendNode('classpathentry', [kind: 'output', path: 'classes'])
+			}
+			
+			whenMerged { cp ->
+				Map entryByPath = cp.entries.groupBy { entry -> entry.path }
+				entryByPath.each { key, values ->
+					if ( values.size() > 1 ) {
+            			def entry = values.first()
+            			if ( entry.kind == 'src' ) {
+            				entry.includes = []
+            				entry.excludes = []
+            			}
+            			int index = cp.entries.indexOf entry
+            			cp.entries.removeAll values
+            			cp.entries.add index, entry
+					}
+				}
+				cp.entries.each { entry ->
+					if ( entry.kind == 'src' && entry.hasProperty('output') ) {
+						entry.output = 'classes'
+					}
+				}
+			}
+		}
+	}
 }
