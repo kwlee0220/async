@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.annotation.concurrent.GuardedBy;
 import javax.jws.Oneway;
 
 import org.slf4j.Logger;
@@ -19,7 +20,6 @@ import cv.ValueInfo;
 import cv.Variable;
 import cv.VariableListener;
 import cv.VariableUpdateException;
-import net.jcip.annotations.GuardedBy;
 
 
 /**

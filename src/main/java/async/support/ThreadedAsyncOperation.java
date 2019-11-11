@@ -6,12 +6,13 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.annotation.concurrent.GuardedBy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import async.OperationSchedulerProvider;
 import async.OperationStoppedException;
-import net.jcip.annotations.GuardedBy;
 
 /**
  * <code>ThreadedAsyncOperation</code>는 비동기 연산 구현을 지원하는 추상 클래스이다.

@@ -3,11 +3,12 @@ package async.support;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.annotation.concurrent.GuardedBy;
+
 import async.AsyncOperation;
 import async.AsyncOperationListener;
 import async.AsyncOperationState;
 import async.SchedulableAsyncOperation;
-import net.jcip.annotations.GuardedBy;
 
 
 

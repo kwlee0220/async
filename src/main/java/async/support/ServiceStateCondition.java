@@ -6,13 +6,14 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
+import javax.annotation.concurrent.GuardedBy;
+
 import com.google.common.eventbus.Subscribe;
 
 import async.FutureCondition;
 import async.Service;
 import async.ServiceState;
 import async.ServiceStateChangeEvent;
-import net.jcip.annotations.GuardedBy;
 
 
 /**

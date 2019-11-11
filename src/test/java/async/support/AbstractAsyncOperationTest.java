@@ -3,6 +3,8 @@ package async.support;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.annotation.concurrent.GuardedBy;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,8 +15,7 @@ import com.google.common.eventbus.Subscribe;
 import async.AsyncOperation;
 import async.AsyncOperationState;
 import async.AsyncOperationStateChangeEvent;
-import net.jcip.annotations.GuardedBy;
-import utils.Guard;
+import utils.async.Guard;
 import utils.func.Unchecked;
 
 /**

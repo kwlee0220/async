@@ -5,6 +5,8 @@ import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.annotation.concurrent.GuardedBy;
+
 import com.google.common.collect.Sets;
 
 import async.AsyncOperation;
@@ -13,7 +15,6 @@ import async.support.AsyncUtils;
 import cv.ValueInfo;
 import cv.Variable;
 import cv.VariableListener;
-import net.jcip.annotations.GuardedBy;
 import utils.Initializable;
 import utils.LoggerSettable;
 import utils.Throwables;

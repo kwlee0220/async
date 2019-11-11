@@ -3,6 +3,8 @@ package async.optor;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Condition;
 
+import javax.annotation.concurrent.GuardedBy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +16,6 @@ import async.AsyncOperationListener;
 import async.AsyncOperationState;
 import async.AsyncOperationStateChangeEvent;
 import async.support.AbstractAsyncOperation;
-import net.jcip.annotations.GuardedBy;
 import utils.Throwables;
 import utils.Utilities;
 import utils.thread.CamusExecutor;

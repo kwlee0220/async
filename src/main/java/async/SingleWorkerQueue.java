@@ -7,7 +7,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
-import net.jcip.annotations.GuardedBy;
+import javax.annotation.concurrent.GuardedBy;
 
 
 /**

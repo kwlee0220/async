@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
+import javax.annotation.concurrent.GuardedBy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +15,6 @@ import async.AsyncOperationState;
 import async.OperationStoppedException;
 import cv.ValueInfo;
 import cv.VariableListener;
-import net.jcip.annotations.GuardedBy;
 import utils.Throwables;
 import utils.Utilities;
 import utils.thread.ExecutorAware;

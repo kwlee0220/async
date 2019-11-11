@@ -1,10 +1,11 @@
 package async.support;
 
+import javax.annotation.concurrent.GuardedBy;
+
 import async.AsyncOperation;
 import async.AsyncOperationListener;
 import async.AsyncOperationState;
 import async.SchedulableAsyncOperation;
-import net.jcip.annotations.GuardedBy;
 
 
 

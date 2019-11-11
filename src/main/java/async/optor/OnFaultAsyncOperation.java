@@ -2,6 +2,8 @@ package async.optor;
 
 import java.util.concurrent.Executor;
 
+import javax.annotation.concurrent.GuardedBy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,7 +11,6 @@ import async.AsyncOperation;
 import async.AsyncOperationListener;
 import async.AsyncOperationState;
 import async.support.AbstractAsyncOperation;
-import net.jcip.annotations.GuardedBy;
 
 
 /**

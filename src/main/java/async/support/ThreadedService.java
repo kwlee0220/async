@@ -3,9 +3,10 @@ package async.support;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import io.vavr.CheckedRunnable;
-import net.jcip.annotations.GuardedBy;
+import javax.annotation.concurrent.GuardedBy;
+
 import utils.Throwables;
+import utils.func.CheckedRunnable;
 
 
 /**
