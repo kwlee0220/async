@@ -14,7 +14,7 @@ import async.AsyncOperation;
 import async.AsyncOperationState;
 import async.AsyncOperationStateChangeEvent;
 import net.jcip.annotations.GuardedBy;
-import utils.Guard;
+import utils.async.Guard;
 import utils.func.Unchecked;
 
 /**
