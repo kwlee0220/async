@@ -208,7 +208,7 @@ public class AbstractAsyncOperationTest {
 		protected void startOperation() throws Throwable {
 			m_providerState.set(BEFORE_NOTI_START);
 			
-			CompletableFuture.runAsync(Unchecked.liftIE(()-> {
+			CompletableFuture.runAsync(Unchecked.ignore(()-> {
 				Thread.sleep(200);
 				AsyncOperationState state = notifyOperationStarted();
 				m_providerState.set(AFTER_NOTI_START);
@@ -237,7 +237,7 @@ public class AbstractAsyncOperationTest {
 	static class AsyncOpImpl3 extends AbstractAsyncOperation<Void> {
 		@Override
 		protected void startOperation() throws Throwable {
-			CompletableFuture.runAsync(Unchecked.liftIE(()-> {
+			CompletableFuture.runAsync(Unchecked.ignore(()-> {
 				Thread.sleep(100);
 				notifyOperationFailed(new AssertionError());
 			}));
@@ -248,7 +248,7 @@ public class AbstractAsyncOperationTest {
 	static class AsyncOpImpl4 extends AbstractAsyncOperation<Void> {
 		@Override
 		protected void startOperation() throws Throwable {
-			CompletableFuture.runAsync(Unchecked.liftIE(()-> {
+			CompletableFuture.runAsync(Unchecked.ignore(()-> {
 				notifyOperationStarted();
 				Thread.sleep(200);
 				notifyOperationFailed(new AssertionError());

@@ -46,10 +46,10 @@ public class AsyncUtils {
 	}
 	
 	public static CompletableFuture<Void> runAsyncSneakily(CheckedRunnable task, Executor executor) {
-		return CompletableFuture.runAsync(Unchecked.erase(task), executor);
+		return CompletableFuture.runAsync(Unchecked.sneakyThrow(task), executor);
 	}
 	public static CompletableFuture<Void> runAsyncSneakily(CheckedRunnable task) {
-		return CompletableFuture.runAsync(Unchecked.erase(task));
+		return CompletableFuture.runAsync(Unchecked.sneakyThrow(task));
 	}
 	
 	public static <T> AsyncCompletableFuture<T> wrap(CompletableFuture<T> future) {
