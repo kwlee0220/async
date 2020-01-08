@@ -36,7 +36,7 @@ public class AbstractAsyncOperationTest {
 	
 	@Subscribe @AllowConcurrentEvents
 	public void receive(AsyncOperationStateChangeEvent<Void> event) {
-		m_guard.run(() -> m_lastState = event.getToState(), true);
+		m_guard.runAndSignalAll(() -> m_lastState = event.getToState());
 	}
 	
 	@Before
