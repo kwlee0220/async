@@ -19,7 +19,7 @@ import async.optor.ConcurrentService;
 import utils.Utilities;
 import utils.func.CheckedRunnable;
 import utils.func.Try;
-import utils.func.Unchecked;
+import utils.func.UncheckedRunnable;
 
 
 /**
@@ -46,10 +46,10 @@ public class AsyncUtils {
 	}
 	
 	public static CompletableFuture<Void> runAsyncSneakily(CheckedRunnable task, Executor executor) {
-		return CompletableFuture.runAsync(Unchecked.sneakyThrow(task), executor);
+		return CompletableFuture.runAsync(UncheckedRunnable.sneakyThrow(task), executor);
 	}
 	public static CompletableFuture<Void> runAsyncSneakily(CheckedRunnable task) {
-		return CompletableFuture.runAsync(Unchecked.sneakyThrow(task));
+		return CompletableFuture.runAsync(UncheckedRunnable.sneakyThrow(task));
 	}
 	
 	public static <T> AsyncCompletableFuture<T> wrap(CompletableFuture<T> future) {
